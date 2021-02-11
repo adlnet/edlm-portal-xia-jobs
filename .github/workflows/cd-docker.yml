@@ -1,0 +1,31 @@
+name: Docker CD
+
+on:
+  push:
+    branches: 
+      - Feature/log_validate_store_dau
+      - main
+  pull_request:
+    branches: 
+      - Feature/log_validate_store_dau
+      - main
+
+jobs:
+  build:
+    name: Build Docker Image
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v2
+    - name: Docker login
+      env:
+       DOCKER_USER: ${{ secrets.DOCKER_USER }}
+       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+      run: |
+       docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
+    - name: Docker build
+      run: |
+       docker build . -t openlxp/openlxp-xia-dau
+    - name: Push Image
+      run: |
+        docker push openlxp/openlxp-xia-dau

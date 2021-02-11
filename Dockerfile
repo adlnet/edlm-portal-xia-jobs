@@ -14,7 +14,7 @@ RUN mkdir -p /opt/app/pip_cache
 RUN mkdir -p /opt/app/openlxp-xia-dau
 COPY requirements.txt start-server.sh /opt/app/
 RUN chmod +x /opt/app/start-server.sh
-COPY .pip_cache /opt/app/pip_cache/
+# COPY .pip_cache /opt/app/pip_cache/
 COPY ./app /opt/app/openlxp-xia-dau/
 WORKDIR /opt/app
 RUN pip install -r requirements.txt --cache-dir /opt/app/pip_cache
