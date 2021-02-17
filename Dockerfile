@@ -12,17 +12,16 @@ RUN ln -sf /dev/stdout /var/log/nginx/access.log \
 RUN mkdir -p /opt/app
 RUN mkdir -p /opt/app/pip_cache
 RUN mkdir -p /opt/app/openlxp-xia-dau
-COPY requirements.txt start-server.sh /opt/app/
+COPY requirements.txt start-server.sh start-app.sh /opt/app/
 RUN chmod +x /opt/app/start-server.sh
-# COPY .pip_cache /opt/app/pip_cache/
+RUN chmod +x /opt/app/start-app.sh
 COPY ./app /opt/app/openlxp-xia-dau/
 WORKDIR /opt/app
 RUN pip install -r requirements.txt --cache-dir /opt/app/pip_cache
 RUN chown -R www-data:www-data /opt/app
 
-
+WORKDIR /opt/app/openlxp-xia-dau/
 
 # start server
 EXPOSE 8020
 STOPSIGNAL SIGTERM
-CMD ["/opt/app/start-server.sh"]
