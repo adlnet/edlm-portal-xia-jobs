@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  db:
+  db_xia_dau:
     image: mysql:5.7
     ports:
       - '3306:3306'
@@ -11,8 +11,10 @@ services:
       MYSQL_PASSWORD: "${DB_PASSWORD}"
       MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
       MYSQL_HOST: ''
+    networks:
+      - openlxp
 
-  app:
+  app_xia_dau:
     build:
       context: .
     ports:
@@ -37,7 +39,14 @@ services:
       REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
       AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
       SECRET_KEY_VAL: "${SECRET_KEY_VAL}"
+      API_ENDPOINT: "${API_ENDPOINT}"
     volumes:
       - ./app:/opt/app/openlxp-xia-dau
     depends_on:
-      - db
+      - db_xia_dau
+    networks:
+      - openlxp
+
+networks:
+  openlxp:
+    external: true

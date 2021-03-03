@@ -44,11 +44,14 @@ class MetadataLedger(models.Model):
 
     METADATA_VALIDATION_CHOICES = [('Y', 'Yes'), ('N', 'No')]
     RECORD_ACTIVATION_STATUS_CHOICES = [('Active', 'A'), ('Inactive', 'I')]
+    RECORD_TRANSMISSION_STATUS_CHOICES = [('Successful', 'S'), ('Failed', 'F'),
+                                          ('Pending', 'P'), ('Ready', 'R') ]
 
-    metadata_record_uuid = models.UUIDField(primary_key=True,
-                                            default=uuid.uuid4, editable=False)
+
     metadata_record_inactivation_date = models.DateTimeField(blank=True,
                                                              null=True)
+    metadata_record_uuid = models.UUIDField(primary_key=True,
+                                            default=uuid.uuid4, editable=False)
     record_lifecycle_status = models.CharField(max_length=10, blank=True,
                                                choices=
                                                RECORD_ACTIVATION_STATUS_CHOICES)
@@ -69,8 +72,14 @@ class MetadataLedger(models.Model):
     target_metadata_hash = models.CharField(max_length=200)
     target_metadata_key = models.TextField()
     target_metadata_key_hash = models.CharField(max_length=200)
+
     target_metadata_transmission_date = models.DateTimeField(blank=True,
                                                              null=True)
+    target_metadata_transmission_status = models.CharField(max_length=10,
+                                                         blank=True,default='Ready',
+                                                         choices=
+                                                         RECORD_TRANSMISSION_STATUS_CHOICES)
+    target_metadata_transmission_status_code = models.CharField(max_length=200, blank=True)
     target_metadata_validation_date = models.DateTimeField(blank=True,
                                                            null=True)
     target_metadata_validation_status = models.CharField(max_length=10,

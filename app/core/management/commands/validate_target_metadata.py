@@ -78,10 +78,10 @@ def validate_target_using_key(target_data_dict, required_dict,
     len_target_metadata = len(target_data_dict)
     for ind in range(len_target_metadata):
         for val in target_data_dict[ind]:
+            validation_result = 'Y'
             for column in target_data_dict[ind][val]:
                 required_columns = required_dict[column]
                 recommended_columns = recommended_dict[column]
-                validation_result = 'Y'
                 for key in target_data_dict[ind][val][column]:
                     if key in required_columns:
                         if not target_data_dict[ind][val][column][key]:
