@@ -7,10 +7,10 @@ from .models import XIAConfiguration
 @admin.register(XIAConfiguration)
 class XIAConfigurationAdmin(admin.ModelAdmin):
     list_display = (
-        'source_file_name', 'source_schema', 'data_file_name', 'source_validation_schema', 'target_renaming_schema',
-        'target_mapping_schema', 'target_file_name', 'target_validation_schema', 'bucket_name', 'upload_bucket_name')
-    fields = ['source_file_name', 'source_schema', 'data_file_name', 'source_validation_schema',
-              'target_renaming_schema',
-              'target_mapping_schema', 'target_file_name', 'target_validation_schema',
-              ('bucket_name', 'upload_bucket_name')]
+        'publisher',
+        'source_metadata_schema',
+        'source_target_mapping', 'target_metadata_schema',)
+    fields = ['publisher',
+              'source_metadata_schema',
+              ('source_target_mapping', 'target_metadata_schema')]
 
