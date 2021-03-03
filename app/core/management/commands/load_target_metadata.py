@@ -24,6 +24,7 @@ def renaming_xia_for_posting_to_xis(data):
     data['metadata'] = data.pop('target_metadata')
     data['metadata_hash'] = data.pop('target_metadata_hash')
     data['metadata_key'] = data.pop('target_metadata_key')
+    data['metadata_key_hash'] = data.pop('target_metadata_key_hash')
     # Adding Publisher in the list to POST to XIS
     dict_add_publisher = {"provider_name": get_publisher_to_add()}
     data.update(dict_add_publisher)
@@ -92,7 +93,8 @@ def check_records_to_load_into_xis():
             'metadata_record_uuid',
             'target_metadata',
             'target_metadata_hash',
-            'target_metadata_key').first()
+            'target_metadata_key',
+            'target_metadata_key_hash').first()
         post_data_to_xis(data)
         check_records_to_load_into_xis()
 
