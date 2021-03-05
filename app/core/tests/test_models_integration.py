@@ -1,10 +1,6 @@
 from django.test import TestCase
 from core.models import XIAConfiguration
 from django.core.exceptions import ValidationError
-from django.test import tag
-
-
-@tag('integration')
 class ModelTests(TestCase):
 
     def test_create_two_xia_configuration(self):
@@ -19,3 +15,4 @@ class ModelTests(TestCase):
                                           "sample_upload_bucket_name2")
             xiaConfig.save()
             xiaConfig2.save()
+

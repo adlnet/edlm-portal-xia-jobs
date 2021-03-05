@@ -4,6 +4,12 @@ from django.core.management import call_command
 from django.test import SimpleTestCase
 from django.db.utils import OperationalError
 from django.test import tag
+import pandas as pd
+import logging
+from core.management.commands.extract_source_metadata import \
+    add_publisher_to_source
+
+logger = logging.getLogger('dict_config_logger')
 
 
 @tag('unit')
@@ -26,3 +32,13 @@ class CommandTests(SimpleTestCase):
             call_command('waitdb')
             self.assertEqual(gi.ensure_connection.call_count, 6)
 
+    def test_add_publisher_to_source(self):
+        data = {
+        "LMS": ["Success Factors LMS v. 5953"],
+        "XAPI": ["Y"],
+        "SCORM": ["N"] }
+
+        test_df = pd.DataFrame.from_dict(data)
+        result = add_publisher_to_source(test_df, 'dau')
+        key_exist = 'SOURCESYSTEM' in result[0]
+        self.assertTrue(key_exist)
