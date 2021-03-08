@@ -86,10 +86,10 @@ class Command(TestCase):
         self.assertEqual(expected_data['source_metadata'].get('FLASHIMPACTED'),
                          a['FLASHIMPACTED'])
 
-        def test_extract_metadata_using_key_validation(self):
-            """Test if the entry is already existing in Metadata Ledger then
-            can first record get inactivated or second entry is created in
-            Metadata Ledger or not."""
+    def test_extract_metadata_using_key_validation(self):
+        """Test if the entry is already existing in Metadata Ledger then
+        can first record get inactivated or second entry is created in
+        Metadata Ledger or not."""
 
         entry_1 = {'0': {
             "LMS": "Success Factors LMS v. 5953",
