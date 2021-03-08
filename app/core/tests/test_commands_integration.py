@@ -1,7 +1,6 @@
 from django.test import TestCase
 from core.models import XIAConfiguration, MetadataLedger
 from django.test import tag
-import pandas as pd
 from core.management.commands.extract_source_metadata import \
     get_publisher_detail, extract_metadata_using_key
 import logging
@@ -25,28 +24,28 @@ class Command(TestCase):
         Metadata_ledger table """
 
         test_data = {'0': {
-                "LMS": "Success Factors LMS v. 5953",
-                "OPR": "Marine Corps",
-                "XAPI": "Y",
-                "SCORM": "N",
-                "AGENCY": "OUSD(C) ",
-                "VENDOR": "Skillsoft",
-                "AUDIENCE": "C-Civilian",
-                "COURSEID": "IFS0067",
-                "ITEMTYPE": "SEMINAR",
-                "COURSENAME": "AFOTEC 301 TMS",
-                "Unnamed: 19": "Linked to a JKO-hosted course",
-                "508COMPLIANT": "y",
-                "SOURCESYSTEM": "DAU",
-                "SOURCE_FILES": " N",
-                "FLASHIMPACTED": "Y",
-                "DELIVERYMETHOD": "",
-                "CONVERTEDREMAKE": "N",
-                "COURSEDESCRIPTION": "course covers Identify Stakeholders ",
-                "MANDATORYTRAINING": "N",
-                "SUPERVISORMANAGERIAL": "Y",
-                "COMMONMILITARYTRAINING": ""
-            }}
+            "LMS": "Success Factors LMS v. 5953",
+            "OPR": "Marine Corps",
+            "XAPI": "Y",
+            "SCORM": "N",
+            "AGENCY": "OUSD(C) ",
+            "VENDOR": "Skillsoft",
+            "AUDIENCE": "C-Civilian",
+            "COURSEID": "IFS0067",
+            "ITEMTYPE": "SEMINAR",
+            "COURSENAME": "AFOTEC 301 TMS",
+            "Unnamed: 19": "Linked to a JKO-hosted course",
+            "508COMPLIANT": "y",
+            "SOURCESYSTEM": "DAU",
+            "SOURCE_FILES": " N",
+            "FLASHIMPACTED": "Y",
+            "DELIVERYMETHOD": "",
+            "CONVERTEDREMAKE": "N",
+            "COURSEDESCRIPTION": "course covers Identify Stakeholders ",
+            "MANDATORYTRAINING": "N",
+            "SUPERVISORMANAGERIAL": "Y",
+            "COMMONMILITARYTRAINING": ""
+        }}
 
         expected_data = {
             "metadata_record_inactivation_date": "",
@@ -87,7 +86,61 @@ class Command(TestCase):
         self.assertEqual(expected_data['source_metadata'].get('FLASHIMPACTED'),
                          a['FLASHIMPACTED'])
 
+        def test_extract_metadata_using_key_validation(self):
+            """Test if the entry is already existing in Metadata Ledger then
+            can first record get inactivated or second entry is created in
+            Metadata Ledger or not."""
 
-
-
-
+        entry_1 = {'0': {
+            "LMS": "Success Factors LMS v. 5953",
+            "OPR": "Marine Corps",
+            "XAPI": "Y",
+            "SCORM": "N",
+            "AGENCY": "OUSD(C) ",
+            "VENDOR": "Skillsoft",
+            "AUDIENCE": "C-Civilian",
+            "COURSEID": "IFS0067",
+            "ITEMTYPE": "SEMINAR",
+            "COURSENAME": "AFOTEC 301 TMS",
+            "Unnamed: 19": "Linked to a JKO-hosted course",
+            "508COMPLIANT": "y",
+            "SOURCESYSTEM": "DAU",
+            "SOURCE_FILES": " N",
+            "FLASHIMPACTED": "Y",
+            "DELIVERYMETHOD": "",
+            "CONVERTEDREMAKE": "N",
+            "COURSEDESCRIPTION": "course covers Identify Stakeholders ",
+            "MANDATORYTRAINING": "N",
+            "SUPERVISORMANAGERIAL": "Y",
+            "COMMONMILITARYTRAINING": ""
+        }}
+        extract_metadata_using_key(entry_1)
+        entry_2 = {'0': {
+            "LMS": "Success Factors LMS v. 5953",
+            "OPR": "Marine Corps _ TEST",
+            "XAPI": "Y",
+            "SCORM": "N",
+            "AGENCY": "OUSD(C) ",
+            "VENDOR": "Skillsoft",
+            "AUDIENCE": "C-Civilian",
+            "COURSEID": "IFS0067",
+            "ITEMTYPE": "SEMINAR",
+            "COURSENAME": "AFOTEC 301 TMS",
+            "Unnamed: 19": "Linked to a JKO-hosted course",
+            "508COMPLIANT": "y",
+            "SOURCESYSTEM": "DAU",
+            "SOURCE_FILES": " N",
+            "FLASHIMPACTED": "Y",
+            "DELIVERYMETHOD": "",
+            "CONVERTEDREMAKE": "N",
+            "COURSEDESCRIPTION": "course covers Identify Stakeholders ",
+            "MANDATORYTRAINING": "N",
+            "SUPERVISORMANAGERIAL": "Y",
+            "COMMONMILITARYTRAINING": ""
+        }}
+        extract_metadata_using_key(entry_2)
+        result_data_2 = MetadataLedger.objects.values(
+            'record_lifecycle_status').filter(
+            source_metadata_key='DAU_IFS0067')
+        logger.info(type(result_data_2))
+        self.assertNotEqual(result_data_2[0], result_data_2[1])

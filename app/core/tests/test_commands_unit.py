@@ -34,9 +34,9 @@ class CommandTests(SimpleTestCase):
 
     def test_add_publisher_to_source(self):
         data = {
-        "LMS": ["Success Factors LMS v. 5953"],
-        "XAPI": ["Y"],
-        "SCORM": ["N"] }
+            "LMS": ["Success Factors LMS v. 5953"],
+            "XAPI": ["Y"],
+            "SCORM": ["N"]}
 
         test_df = pd.DataFrame.from_dict(data)
         result = add_publisher_to_source(test_df, 'dau')
