@@ -63,26 +63,25 @@ def replace_field_on_target_schema(ind1, target_section_name,
                                    target_field_name,
                                    target_data_dict):
     """Replacing values in field referring target schema"""
-    if target_field_name == 'EducationalContext':
-        if target_data_dict[ind1][target_section_name][
-            target_field_name] == 'y' or \
-                target_data_dict[ind1][
-                    target_section_name][
-                    target_field_name] == 'Y':
+    if target_data_dict[ind1][target_section_name][
+        target_field_name] == 'y' or \
             target_data_dict[ind1][
                 target_section_name][
-                target_field_name] = 'Mandatory'
-        else:
-            if target_data_dict[ind1][
-                target_section_name][
-                target_field_name] == 'n' or \
-                    target_data_dict[ind1][
-                        target_section_name][
-                        target_field_name] == 'N':
+                target_field_name] == 'Y':
+        target_data_dict[ind1][
+            target_section_name][
+            target_field_name] = 'Mandatory'
+    else:
+        if target_data_dict[ind1][
+            target_section_name][
+            target_field_name] == 'n' or \
                 target_data_dict[ind1][
                     target_section_name][
-                    target_field_name] = 'Non - ' \
-                                         'Mandatory '
+                    target_field_name] == 'N':
+            target_data_dict[ind1][
+                target_section_name][
+                target_field_name] = 'Non - ' \
+                                     'Mandatory'
 
 
 def store_transformed_source_metadata(key_value, key_value_hash,
@@ -119,12 +118,14 @@ def transform_source_using_key(source_data_dict, target_mapping_dict):
             for ind1 in target_data_dict:
                 for target_section_name in target_data_dict[ind1]:
                     for target_field_name in target_data_dict[ind1][
-                         target_section_name]:
+                            target_section_name]:
                         # Replacing values in field referring target schema
-                        replace_field_on_target_schema(ind1,
-                                                       target_section_name
-                                                       , target_field_name,
-                                                       target_data_dict)
+                        if target_section_name == 'Course' and \
+                                target_field_name == 'EducationalContext':
+                            replace_field_on_target_schema(ind1,
+                                                           target_section_name
+                                                           , target_field_name,
+                                                           target_data_dict)
                         # Create key_hash value to
                         if target_field_name == 'CourseCode' or \
                                 'CourseProviderName':

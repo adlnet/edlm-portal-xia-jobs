@@ -9,6 +9,8 @@ from core.management.commands.extract_source_metadata import \
     add_publisher_to_source
 from core.management.commands.validate_source_metadata import \
     get_required_fields_for_source_validation
+from core.management.commands.transform_source_metadata import \
+    create_target_metadata_dict,replace_field_on_target_schema
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -61,3 +63,142 @@ class CommandTests(SimpleTestCase):
 
         received_list = get_required_fields_for_source_validation(data)
         self.assertEqual(required_list, received_list)
+
+    def test_create_target_metadata_dict(self):
+        """Test to check transformation of source to target schema and
+        replacing None values with empty strings"""
+        source_data_dict = {
+            "LMS": "Success Factors LMS v. 5953",
+            "OPR": "Marine Corps",
+            "XAPI": "Y",
+            "SCORM": "N",
+            "AGENCY": "OUSD(C)",
+            "VENDOR": "Skillsoft",
+            "AUDIENCE": "C-Civilian",
+            "COURSEID": "IFS0067",
+            "ITEMTYPE": "SEMINAR",
+            "COURSENAME": "AFOTEC 301 TMS",
+            "Unnamed: 19": "Linked to a JKO-hosted course",
+            "508COMPLIANT": "y",
+            "SOURCESYSTEM": "DAU",
+            "SOURCE_FILES": "N",
+            "FLASHIMPACTED": "Y",
+            "DELIVERYMETHOD": None,
+            "CONVERTEDREMAKE": "N",
+            "COURSEDESCRIPTION": "course covers the Identify Stakeholders",
+            "MANDATORYTRAINING": "N",
+            "SUPERVISORMANAGERIAL": "Y",
+            "COMMONMILITARYTRAINING": ""
+        }
+
+        target_mapping_dict = {
+            'Course': {
+                'CourseProviderName': 'SOURCESYSTEM',
+                'DepartmentName': 'AGENCY',
+                'EducationalContext': 'MANDATORYTRAINING',
+                'CourseType': 'ITEMTYPE',
+                'CourseCode': 'COURSEID',
+                'CourseTitle': 'COURSENAME',
+                'CourseDescription': 'COURSEDESCRIPTION',
+                'CourseAudience': 'AUDIENCE',
+                'CourseSectionDeliveryMode': 'DELIVERYMETHOD'
+            },
+            'Lifecycle': {
+                'Provider': 'VENDOR',
+                'Maintainer': 'OPR',
+                'OtherRole': 'LMS'
+            }
+        }
+
+        expected_data_dict = {
+            0: {
+                'Course': {
+                    'CourseProviderName': 'DAU',
+                    'DepartmentName': 'OUSD(C)',
+                    'EducationalContext': 'N',
+                    'CourseType': 'SEMINAR',
+                    'CourseCode': 'IFS0067',
+                    'CourseTitle': 'AFOTEC 301 TMS',
+                    'CourseDescription': 'course covers the Identify Stakeholders',
+                    'CourseAudience': 'C-Civilian',
+                    'CourseSectionDeliveryMode': ''
+                },
+                'Lifecycle': {
+                    'Provider': 'Skillsoft',
+                    'Maintainer': 'Marine Corps',
+                    'OtherRole': 'Success Factors LMS v. 5953'
+                }
+            }
+        }
+
+        result_data_dict = create_target_metadata_dict(target_mapping_dict,
+                                                       source_data_dict)
+
+        self.assertEqual(result_data_dict, expected_data_dict)
+
+        self.assertEqual(result_data_dict[0]['Course'].get('CourseCode'),
+                         expected_data_dict[0]['Course'].get('CourseCode'))
+        self.assertEqual(
+            result_data_dict[0]['Course'].get('CourseSectionDeliveryMode'),
+            expected_data_dict[0]['Course'].get('CourseSectionDeliveryMode'))
+        self.assertEqual(result_data_dict[0]['Lifecycle'].get('Maintainer'),
+                         expected_data_dict[0]['Lifecycle'].get('Maintainer'))
+
+    def test_replace_field_on_target_schema(self):
+        """Test to check Replacing values in field referring target schema"""
+        test_data_educational_context_Y = {
+            0: {
+                'Course': {
+                    'EducationalContext': 'y',
+                    'CourseCode': 'wd_ango_a05_it_enus',
+                },
+                'Lifecycle': {
+                    'Provider': 'DIA',
+                }
+            }
+        }
+
+        test_data_educational_context_N = {
+            0: {
+                'Course': {
+                    'EducationalContext': 'n',
+                    'CourseCode': 'wd_ango_a05_it_enus',
+                },
+                'Lifecycle': {
+                    'Provider': 'DIA',
+                }
+            }
+        }
+
+        expected_data_educational_context_Y = {
+            'Course': {
+                'EducationalContext': 'Mandatory',
+                'CourseCode': 'wd_ango_a05_it_enus',
+            },
+            'Lifecycle': {
+                'Provider': 'DIA',
+            }
+        }
+
+        expected_data_educational_context_N = {
+            'Course': {
+                'EducationalContext': 'Non - Mandatory',
+                'CourseCode': 'wd_ango_a05_it_enus',
+            },
+            'Lifecycle': {
+                'Provider': 'DIA',
+            }
+        }
+
+        replace_field_on_target_schema(0,'Course','EducationalContext',
+                                       test_data_educational_context_Y)
+        replace_field_on_target_schema(0, 'Course', 'EducationalContext',
+                                       test_data_educational_context_N)
+
+        self.assertEqual(test_data_educational_context_Y[0]['Course'].get('EducationalContext'),
+                         expected_data_educational_context_Y['Course'].get(
+                             'EducationalContext'))
+        self.assertEqual(test_data_educational_context_N[0]['Course'].get(
+            'EducationalContext'),
+            expected_data_educational_context_N['Course'].get(
+                'EducationalContext'))

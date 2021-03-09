@@ -7,9 +7,11 @@ from core.management.commands.validate_source_metadata import \
     get_source_validation_schema, validate_source_using_key, \
     get_source_metadata_for_validation
 import logging
+from core.management.commands.transform_source_metadata import \
+    get_target_metadata_for_transformation, transform_source_using_key
 from core.management.utils.xsr_client import read_json_data
 from core.management.commands.validate_target_metadata import \
-                get_target_validation_schema
+    get_target_validation_schema
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -230,7 +232,6 @@ class Command(TestCase):
                                                     'source_metadata_validation_status').filter(
             source_metadata_key='DAU_IFS0067').first()
         self.assertEqual(expected_data['source_metadata_validation_status'],
-
                          result_data['source_metadata_validation_status'])
 
     def test_get_target_validation_schema(self):
@@ -241,3 +242,88 @@ class Command(TestCase):
         result_target_metadata_schema = get_target_validation_schema()
         self.assertEqual('p2881_target_validation_schema.json',
                          result_target_metadata_schema)
+
+    def test_get_target_metadata_for_transformation(self):
+        """Test that get target mapping_dictionary from XIAConfiguration """
+
+        xiaConfig = XIAConfiguration(
+            source_target_mapping='p2881_target_metadata_schema.json')
+        xiaConfig.save()
+        result_target_mapping_dict = get_target_metadata_for_transformation()
+        expected_target_mapping_dict = read_json_data(
+            'p2881_target_metadata_schema.json')
+        self.assertEqual(result_target_mapping_dict,
+                         expected_target_mapping_dict)
+
+    def test_transform_source_using_key(self):
+        """Test to transform source metadata to target metadata schema
+        format"""
+
+        source_data = {
+            "LMS": "Success Factors LMS v. 5953",
+            "OPR": "Marine Corps",
+            "XAPI": "Y",
+            "SCORM": "N",
+            "AGENCY": "OUSD(C) ",
+            "VENDOR": "Skillsoft",
+            "AUDIENCE": "C-Civilian",
+            "COURSEID": "IFS0067",
+            "ITEMTYPE": "SEMINAR",
+            "COURSENAME": "AFOTEC 301 TMS",
+            "Unnamed: 19": "Linked to a JKO-hosted course",
+            "508COMPLIANT": "y",
+            "SOURCESYSTEM": "DAU",
+            "SOURCE_FILES": " N",
+            "FLASHIMPACTED": "Y",
+            "DELIVERYMETHOD": "",
+            "CONVERTEDREMAKE": "N",
+            "COURSEDESCRIPTION": "course covers the Identify Stakeholders",
+            "MANDATORYTRAINING": "N",
+            "SUPERVISORMANAGERIAL": "Y",
+            "COMMONMILITARYTRAINING": ""
+        }
+        metadata_ledger = MetadataLedger(record_lifecycle_status='active',
+                                         source_metadata=source_data,
+                                         source_metadata_hash=
+                                         'dd83f85b503e052a3997ac945ccdfe02',
+                                         source_metadata_validation_status='Y',
+                                         source_metadata_key='DAU_IFS0067',
+                                         source_metadata_validation_date=
+                                         '2021-03-09 03:14:10.698914')
+        metadata_ledger.save()
+
+        target_mapping_dict = {
+            'Course': {
+                'CourseProviderName': 'SOURCESYSTEM',
+                'DepartmentName': 'AGENCY',
+                'EducationalContext': 'MANDATORYTRAINING',
+                'CourseType': 'ITEMTYPE',
+                'CourseCode': 'COURSEID',
+                'CourseTitle': 'COURSENAME',
+                'CourseDescription': 'COURSEDESCRIPTION',
+                'CourseAudience': 'AUDIENCE',
+                'CourseSectionDeliveryMode': 'DELIVERYMETHOD'
+            },
+            'Lifecycle': {
+                'Provider': 'VENDOR',
+                'Maintainer': 'OPR',
+                'OtherRole': 'LMS'
+            }
+        }
+
+        test_data_dict = MetadataLedger.objects.values(
+            'source_metadata').filter(
+            source_metadata_validation_status='Y',
+            record_lifecycle_status='Active').exclude(
+            source_metadata_validation_date=None)
+
+        transform_source_using_key(test_data_dict, target_mapping_dict)
+        result_data = MetadataLedger.objects.values('target_metadata').filter(
+            source_metadata_key='DAU_IFS0067').first()
+
+        self.assertEqual(
+            result_data['target_metadata']['Course'].get('CourseCode'),
+            source_data['COURSEID'])
+        self.assertEqual(
+            result_data['target_metadata']['Lifecycle'].get('Provider'),
+            source_data['VENDOR'])

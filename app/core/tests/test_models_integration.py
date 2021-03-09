@@ -17,4 +17,3 @@ class ModelTests(TestCase):
                                           "sample_upload_bucket_name2")
             xiaConfig.save()
             xiaConfig2.save()
-
