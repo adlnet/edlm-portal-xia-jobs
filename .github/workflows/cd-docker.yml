@@ -3,11 +3,9 @@ name: Docker CD
 on:
   push:
     branches: 
-      - Feature/log_validate_store_dau
       - main
   pull_request:
     branches: 
-      - Feature/log_validate_store_dau
       - main
 
 jobs:
