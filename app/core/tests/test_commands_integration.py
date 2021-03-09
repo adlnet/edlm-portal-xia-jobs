@@ -8,6 +8,8 @@ from core.management.commands.validate_source_metadata import \
     get_source_metadata_for_validation
 import logging
 from core.management.utils.xsr_client import read_json_data
+from core.management.commands.validate_target_metadata import \
+                get_target_validation_schema
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -183,10 +185,10 @@ class Command(TestCase):
                 "COMMONMILITARYTRAINING": ""
             },
             "source_metadata_hash": "dd83f85b503e052a3997ac945ccdfe02",
-            "source_metadata_validation_status" : "Y"
+            "source_metadata_validation_status": "Y"
         }
 
-        source_data ={
+        source_data = {
             "source_metadata": {
                 "LMS": "Success Factors LMS v. 5953",
                 "OPR": "Marine Corps",
@@ -209,8 +211,8 @@ class Command(TestCase):
                 "SUPERVISORMANAGERIAL": "Y",
                 "COMMONMILITARYTRAINING": ""
             }}
-        metadata_ledger = MetadataLedger(record_lifecycle_status = 'active',
-                                         source_metadata =source_data,
+        metadata_ledger = MetadataLedger(record_lifecycle_status='active',
+                                         source_metadata=source_data,
                                          source_metadata_hash=
                                          'dd83f85b503e052a3997ac945ccdfe02',
                                          source_metadata_validation_status='',
@@ -230,3 +232,12 @@ class Command(TestCase):
         self.assertEqual(expected_data['source_metadata_validation_status'],
 
                          result_data['source_metadata_validation_status'])
+
+    def test_get_target_validation_schema(self):
+        """Test to Retrieve target validation schema from XIA configuration """
+        xiaConfig = XIAConfiguration(target_metadata_schema=
+                                     'p2881_target_validation_schema.json')
+        xiaConfig.save()
+        result_target_metadata_schema = get_target_validation_schema()
+        self.assertEqual('p2881_target_validation_schema.json',
+                         result_target_metadata_schema)

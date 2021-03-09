@@ -1,6 +1,8 @@
 from django.test import TestCase
 from core.models import XIAConfiguration
 from django.core.exceptions import ValidationError
+
+
 class ModelTests(TestCase):
 
     def test_create_two_xia_configuration(self):
