@@ -63,6 +63,7 @@ def validate_source_using_key(source_data_dict, required_column_name):
     len_source_metadata = len(source_data_dict)
     for ind in range(len_source_metadata):
         # Updating default validation for all records
+        key_value_hash = ''
         validation_result = 'Y'
         for table_column_name in source_data_dict[ind]:
             for column in source_data_dict[ind][table_column_name]:
