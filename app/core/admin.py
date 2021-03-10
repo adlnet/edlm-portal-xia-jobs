@@ -13,4 +13,3 @@ class XIAConfigurationAdmin(admin.ModelAdmin):
     fields = ['publisher',
               'source_metadata_schema',
               ('source_target_mapping', 'target_metadata_schema')]
-

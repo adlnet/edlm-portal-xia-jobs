@@ -10,7 +10,9 @@ from core.management.commands.extract_source_metadata import \
 from core.management.commands.validate_source_metadata import \
     get_required_fields_for_source_validation
 from core.management.commands.transform_source_metadata import \
-    create_target_metadata_dict,replace_field_on_target_schema
+    create_target_metadata_dict, replace_field_on_target_schema
+from core.management.commands.validate_target_metadata import \
+    get_required_recommended_fields_for_target_validation
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -119,7 +121,7 @@ class CommandTests(SimpleTestCase):
                     'CourseType': 'SEMINAR',
                     'CourseCode': 'IFS0067',
                     'CourseTitle': 'AFOTEC 301 TMS',
-                    'CourseDescription': 'course covers the Identify Stakeholders',
+                    'CourseDescription': 'course covers Identify Stakeholders',
                     'CourseAudience': 'C-Civilian',
                     'CourseSectionDeliveryMode': ''
                 },
@@ -190,15 +192,48 @@ class CommandTests(SimpleTestCase):
             }
         }
 
-        replace_field_on_target_schema(0,'Course','EducationalContext',
+        replace_field_on_target_schema(0, 'Course', 'EducationalContext',
                                        test_data_educational_context_Y)
         replace_field_on_target_schema(0, 'Course', 'EducationalContext',
                                        test_data_educational_context_N)
 
-        self.assertEqual(test_data_educational_context_Y[0]['Course'].get('EducationalContext'),
-                         expected_data_educational_context_Y['Course'].get(
-                             'EducationalContext'))
+        self.assertEqual(test_data_educational_context_Y[0]['Course'].get(
+            'EducationalContext'),
+            expected_data_educational_context_Y['Course'].get(
+                'EducationalContext'))
         self.assertEqual(test_data_educational_context_N[0]['Course'].get(
             'EducationalContext'),
             expected_data_educational_context_N['Course'].get(
                 'EducationalContext'))
+
+    def test_get_required_recommended_fields_for_target_validation(self):
+        """Test for Creating list of fields which are Required and
+        recommended """
+        data = {'Course': {
+            'CourseProviderName': 'Required',
+            'DepartmentName': 'Required',
+            'EducationalContext': 'Recommended',
+            'CourseCode': 'Required',
+            'CourseTitle': 'Required',
+            'CourseDescription': 'Required',
+            'CourseAudience': 'Required',
+            'CourseSectionDeliveryMode': 'Optional'
+        },
+            'Lifecycle': {
+                'Provider': 'Required',
+                'Maintainer': 'Required',
+                'OtherRole': 'Optional'
+            }
+        }
+
+        required_dict = {'Course': ['CourseProviderName', 'DepartmentName',
+                                    'CourseCode', 'CourseTitle',
+                                    'CourseDescription',
+                                    'CourseAudience'],
+                         'Lifecycle': ['Provider', 'Maintainer']}
+        recommended_dict = {'Course': ['EducationalContext'], 'Lifecycle': []}
+
+        req_dict1, rcm_dict2 = \
+            get_required_recommended_fields_for_target_validation(data)
+        self.assertEqual(required_dict, req_dict1)
+        self.assertEqual(recommended_dict, rcm_dict2)

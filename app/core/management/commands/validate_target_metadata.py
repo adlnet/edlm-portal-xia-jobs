@@ -120,11 +120,11 @@ class Command(BaseCommand):
             target data is validated and stored in metadataLedger
         """
         target_validation_schema = get_target_validation_schema()
-        schema_data_dict = read_target_validation_schema\
+        schema_data_dict = read_target_validation_schema \
             (target_validation_schema)
         target_data_dict = get_target_metadata_for_validation()
         required_dict, recommended_dict = \
-            get_required_recommended_fields_for_target_validation\
+            get_required_recommended_fields_for_target_validation \
                 (schema_data_dict)
         validate_target_using_key(target_data_dict, required_dict,
                                   recommended_dict)

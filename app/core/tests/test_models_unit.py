@@ -12,9 +12,11 @@ class ModelTests(SimpleTestCase):
         with defaults """
         source_metadata_schema = 'test_file.csv'
 
-        xiaConfig = XIAConfiguration(source_metadata_schema=source_metadata_schema)
+        xiaConfig = XIAConfiguration(source_metadata_schema=
+                                     source_metadata_schema)
 
-        self.assertEqual(xiaConfig.source_metadata_schema, source_metadata_schema)
+        self.assertEqual(xiaConfig.source_metadata_schema,
+                         source_metadata_schema)
         self.assertEqual(xiaConfig.source_target_mapping,
                          'p2881_target_metadata_schema.json')
         self.assertEqual(xiaConfig.target_metadata_schema,
@@ -23,7 +25,6 @@ class ModelTests(SimpleTestCase):
     def test_metadata_ledger(self):
         """Test for a new Metadata_Ledger entry is successful with defaults"""
         metadata_record_inactivation_date = '2021-02-04 01:26:56.528476'
-        # metadata_record_uuid = ''
         record_lifecycle_status = 'A'
         source_metadata = ''
         source_metadata_extraction_date = '2021-03-08 15:57:05.458400'
@@ -46,7 +47,6 @@ class ModelTests(SimpleTestCase):
         metadataLedger = MetadataLedger(
             metadata_record_inactivation_date=
             metadata_record_inactivation_date,
-            # metadata_record_uuid=metadata_record_uuid,
             record_lifecycle_status=record_lifecycle_status,
             source_metadata=source_metadata,
             source_metadata_extraction_date=source_metadata_extraction_date,
@@ -73,8 +73,6 @@ class ModelTests(SimpleTestCase):
             target_metadata_validation_status=
             target_metadata_validation_status)
 
-        # self.assertEqual(metadataLedger.metadata_record_uuid,
-        #                  metadata_record_uuid)
         self.assertEqual(metadataLedger.metadata_record_inactivation_date,
                          metadata_record_inactivation_date)
         self.assertEqual(metadataLedger.record_lifecycle_status,

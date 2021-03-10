@@ -55,13 +55,15 @@ def post_data_to_xis(data):
         if xis_response.status_code == 201:
             MetadataLedger.objects.filter(
                 metadata_record_uuid=uuid_val).update(
-                target_metadata_transmission_status_code=xis_response.status_code,
+                target_metadata_transmission_status_code=
+                xis_response.status_code,
                 target_metadata_transmission_status='Successful',
                 target_metadata_transmission_date=timezone.now())
         else:
             MetadataLedger.objects.filter(
                 metadata_record_uuid=uuid_val).update(
-                target_metadata_transmission_status_code=xis_response.status_code,
+                target_metadata_transmission_status_code=
+                xis_response.status_code,
                 target_metadata_transmission_status='Failed',
                 target_metadata_transmission_date=timezone.now())
             logger.warning("Bad request sent " + str(xis_response.status_code)
