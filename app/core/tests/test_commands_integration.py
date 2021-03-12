@@ -14,7 +14,8 @@ from core.management.utils.xsr_client import read_json_data
 from core.management.commands.validate_target_metadata import \
     get_target_validation_schema, validate_target_using_key
 from core.management.commands.load_target_metadata import \
-    renaming_xia_for_posting_to_xis
+    renaming_xia_for_posting_to_xis, post_data_to_xis
+from unittest.mock import patch
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -22,8 +23,10 @@ logger = logging.getLogger('dict_config_logger')
 @tag('integration')
 class Command(TestCase):
 
+    """Test cases for extract_source_metadata """
+
     def test_get_publisher_detail(self):
-        """Test that get publisher name from XIAConfiguration """
+        """Test to get publisher name from XIAConfiguration """
 
         xiaConfig = XIAConfiguration(publisher='dau')
         xiaConfig.save()
@@ -31,7 +34,7 @@ class Command(TestCase):
         self.assertEqual('dau', result_publisher)
 
     def test_extract_metadata_using_key(self):
-        """Test if the keys and hash is getting created and saving in
+        """Test for the keys and hash creation and save in
         Metadata_ledger table """
 
         test_data = {'0': {
@@ -96,9 +99,9 @@ class Command(TestCase):
                          a['FLASHIMPACTED'])
 
     def test_extract_metadata_using_key_validation(self):
-        """Test if the entry is already existing in Metadata Ledger then
-        can first record get inactivated or second entry is created in
-        Metadata Ledger or not."""
+        """Test if the entry is already existing in Metadata Ledger, then
+        first record get inactivated or second entry is created in
+        Metadata Ledger"""
 
         entry_1 = {'0': {
             "LMS": "Success Factors LMS v. 5953",
@@ -158,6 +161,8 @@ class Command(TestCase):
                          result_data_2[1]['record_lifecycle_status'])
         self.assertNotEqual(result_data_2[0], result_data_2[1])
 
+    """Test cases for validate_source_metadata """
+
     def test_get_source_validation_schema(self):
         """Test to retrieve source validation schema from XIA configuration """
         xiaConfig = XIAConfiguration(source_metadata_schema=
@@ -216,7 +221,7 @@ class Command(TestCase):
         result_query = MetadataLedger.objects.values(
             'source_metadata_validation_status', ).filter(
             source_metadata_key_hash='e7d358d47cd56d97dac93e650cfc415b'
-                                                                    ).first()
+        ).first()
         self.assertEqual('Y', result_query.get(
             'source_metadata_validation_status'))
 
@@ -269,9 +274,11 @@ class Command(TestCase):
         result_query = MetadataLedger.objects.values(
             'source_metadata_validation_status', ).filter(
             source_metadata_key_hash='e7d358d47cd56d97dac93e650cfc415b'
-                                                            ).first()
+        ).first()
         self.assertEqual('N', result_query.get(
             'source_metadata_validation_status'))
+
+    """Test cases for transform_source_metadata """
 
     def test_get_target_metadata_for_transformation(self):
         """Test that get target mapping_dictionary from XIAConfiguration """
@@ -358,6 +365,8 @@ class Command(TestCase):
             result_data['target_metadata']['Lifecycle'].get('Provider'),
             source_data['VENDOR'])
 
+    """Test cases for validate_target_metadata """
+
     def test_get_target_validation_schema(self):
         """Test to Retrieve target validation schema from XIA configuration """
         xiaConfig = XIAConfiguration(target_metadata_schema=
@@ -443,7 +452,7 @@ class Command(TestCase):
         result_query = MetadataLedger.objects.values(
             'target_metadata_validation_status', ).filter(
             target_metadata_key_hash='52c6a7eacac672e03e6a8c60c5fa39c2'
-                                                                    ).first()
+        ).first()
 
         self.assertEqual('Y', result_query.get(
             'target_metadata_validation_status'))
@@ -523,10 +532,12 @@ class Command(TestCase):
         result_query = MetadataLedger.objects.values(
             'target_metadata_validation_status', ).filter(
             target_metadata_key_hash='52c6a7eacac672e03e6a8c60c5fa39c2'
-                                                ).first()
+        ).first()
 
         self.assertEqual('N', result_query.get(
             'target_metadata_validation_status'))
+
+    """Test cases for validate_target_metadata """
 
     def test_renaming_xia_for_posting_to_xis(self):
         """Test for Renaming XIA column names to match with XIS column names"""
@@ -593,3 +604,189 @@ class Command(TestCase):
                           return_data['metadata_key_hash'])
         self.assertEquals(expected_data['provider_name'],
                           return_data['provider_name'])
+
+    def test_post_data_to_xis_response_201(self):
+        """POSTing XIA metadata_ledger to XIS metadata_ledger and receive
+        response status code 201"""
+
+        source_data = {
+            "LMS": "Success Factors LMS v. 5953",
+            "OPR": "Marine Corps",
+            "XAPI": "Y",
+            "SCORM": "N",
+            "AGENCY": "",
+            "VENDOR": "Skillsoft",
+            "AUDIENCE": "C-Civilian",
+            "COURSEID": "IFS0067",
+            "ITEMTYPE": "SEMINAR",
+            "COURSENAME": "AFOTEC 301 TMS",
+            "Unnamed: 19": "Linked to a JKO-hosted course",
+            "508COMPLIANT": "y",
+            "SOURCE_FILES": " N",
+            "FLASHIMPACTED": "Y",
+            "DELIVERYMETHOD": "",
+            "CONVERTEDREMAKE": "N",
+            "COURSEDESCRIPTION": "course covers the Identify Stakeholders",
+            "MANDATORYTRAINING": "N",
+            "SUPERVISORMANAGERIAL": "Y",
+            "COMMONMILITARYTRAINING": "",
+            "SOURCESYSTEM": "DAU"
+        }
+
+        target_data = {
+            "Course": {
+                "CourseCode": "oper_24_a02_bs_enus",
+                "CourseType": "eLearning",
+                "CourseTitle": "Linux Kernel Compilation and Linux Startup",
+                "CourseAudience": "Mil/Civ/Contr/Other",
+                "DepartmentName": "",
+                "CourseDescription": "Interview questions",
+                "CourseProviderName": "DAU",
+                "EducationalContext": "Mandatory",
+                "CourseSectionDeliveryMode": "Internal"
+            },
+            "Lifecycle": {
+                "Provider": " ",
+                "OtherRole": "Success Factors LMS v. 7362",
+                "Maintainer": "Ross Major Thomas M"
+            }
+        }
+
+        metadata_ledger = MetadataLedger(record_lifecycle_status='Active',
+                                         source_metadata=source_data,
+                                         target_metadata=target_data,
+                                         target_metadata_hash=
+                                         '205b2df155a2dd4783087af1ad07bca8',
+                                         target_metadata_key_hash=
+                                         '52c6a7eacac672e03e6a8c60c5fa39c2',
+                                         target_metadata_key=
+                                         'DAU_oper_24_a02_bs_enus',
+                                         source_metadata_transformation_date=
+                                         '2021-02-04 01:26:56.528476',
+                                         target_metadata_validation_status='Y',
+                                         source_metadata_validation_status='Y',
+                                         target_metadata_transmission_status=
+                                         'Ready')
+        metadata_ledger.save()
+        data = MetadataLedger.objects.filter(
+            record_lifecycle_status='Active',
+            target_metadata_validation_status='Y',
+            target_metadata_transmission_status='Ready').values(
+            'metadata_record_uuid',
+            'target_metadata',
+            'target_metadata_hash',
+            'target_metadata_key',
+            'target_metadata_key_hash').first()
+        logger.info(data)
+        xiaConfig = XIAConfiguration(publisher='DAU')
+        xiaConfig.save()
+        with patch('requests.post') as response_obj:
+            response_obj.return_value = response_obj
+            response_obj.status_code = 201
+
+            response = post_data_to_xis(data)
+            result_query = MetadataLedger.objects.values(
+                'target_metadata_transmission_status_code',
+                'target_metadata_transmission_status').filter(
+                target_metadata_key='DAU_oper_24_a02_bs_enus').first()
+            logger.info('result_data')
+            logger.info(result_query)
+            logger.info('target_metadata_transmission_status_code')
+
+            self.assertEqual('201', result_query.get(
+                'target_metadata_transmission_status_code'))
+            self.assertEqual('Successful', result_query.get(
+                'target_metadata_transmission_status'))
+
+    def test_post_data_to_xis_responses_other_than_201(self):
+        """POSTing XIA metadata_ledger to XIS metadata_ledger and receive
+        response status code 401"""
+
+        source_data = {
+            "LMS": "Success Factors LMS v. 5953",
+            "OPR": "Marine Corps",
+            "XAPI": "Y",
+            "SCORM": "N",
+            "AGENCY": "",
+            "VENDOR": "Skillsoft",
+            "AUDIENCE": "C-Civilian",
+            "COURSEID": "IFS0067",
+            "ITEMTYPE": "SEMINAR",
+            "COURSENAME": "AFOTEC 301 TMS",
+            "Unnamed: 19": "Linked to a JKO-hosted course",
+            "508COMPLIANT": "y",
+            "SOURCE_FILES": " N",
+            "FLASHIMPACTED": "Y",
+            "DELIVERYMETHOD": "",
+            "CONVERTEDREMAKE": "N",
+            "COURSEDESCRIPTION": "course covers the Identify Stakeholders",
+            "MANDATORYTRAINING": "N",
+            "SUPERVISORMANAGERIAL": "Y",
+            "COMMONMILITARYTRAINING": "",
+            "SOURCESYSTEM": "DAU"
+        }
+
+        target_data = {
+            "Course": {
+                "CourseCode": "oper_24_a02_bs_enus",
+                "CourseType": "eLearning",
+                "CourseTitle": "Linux Kernel Compilation and Linux Startup",
+                "CourseAudience": "Mil/Civ/Contr/Other",
+                "DepartmentName": "",
+                "CourseDescription": "Interview questions",
+                "CourseProviderName": "DAU",
+                "EducationalContext": "Mandatory",
+                "CourseSectionDeliveryMode": "Internal"
+            },
+            "Lifecycle": {
+                "Provider": " ",
+                "OtherRole": "Success Factors LMS v. 7362",
+                "Maintainer": "Ross Major Thomas M"
+            }
+        }
+
+        metadata_ledger = MetadataLedger(record_lifecycle_status='Active',
+                                         source_metadata=source_data,
+                                         target_metadata=target_data,
+                                         target_metadata_hash=
+                                         '205b2df155a2dd4783087af1ad07bca8',
+                                         target_metadata_key_hash=
+                                         '52c6a7eacac672e03e6a8c60c5fa39c2',
+                                         target_metadata_key=
+                                         'DAU_oper_24_a02_bs_enus',
+                                         source_metadata_transformation_date=
+                                         '2021-02-04 01:26:56.528476',
+                                         target_metadata_validation_status='Y',
+                                         source_metadata_validation_status='Y',
+                                         target_metadata_transmission_status=
+                                         'Ready')
+        metadata_ledger.save()
+        data = MetadataLedger.objects.filter(
+            record_lifecycle_status='Active',
+            target_metadata_validation_status='Y',
+            target_metadata_transmission_status='Ready').values(
+            'metadata_record_uuid',
+            'target_metadata',
+            'target_metadata_hash',
+            'target_metadata_key',
+            'target_metadata_key_hash').first()
+        logger.info(data)
+        xiaConfig = XIAConfiguration(publisher='DAU')
+        xiaConfig.save()
+        with patch('requests.post') as response_obj:
+            response_obj.return_value = response_obj
+            response_obj.status_code = 401
+
+            response = post_data_to_xis(data)
+            result_query = MetadataLedger.objects.values(
+                'target_metadata_transmission_status_code',
+                'target_metadata_transmission_status').filter(
+                target_metadata_key='DAU_oper_24_a02_bs_enus').first()
+            logger.info('result_data')
+            logger.info(result_query)
+            logger.info('target_metadata_transmission_status_code')
+
+            self.assertEqual('401', result_query.get(
+                'target_metadata_transmission_status_code'))
+            self.assertEqual('Failed', result_query.get(
+                'target_metadata_transmission_status'))

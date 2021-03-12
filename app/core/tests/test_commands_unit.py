@@ -19,6 +19,7 @@ logger = logging.getLogger('dict_config_logger')
 
 @tag('unit')
 class CommandTests(SimpleTestCase):
+    """Test cases for waitdb """
 
     def test_wait_for_db_ready(self):
         """Test that waiting for db when db is available"""
@@ -37,6 +38,8 @@ class CommandTests(SimpleTestCase):
             call_command('waitdb')
             self.assertEqual(gi.ensure_connection.call_count, 6)
 
+    """Test cases for extract_source_metadata """
+
     def test_add_publisher_to_source(self):
         """Test for Add publisher column to source metadata and return
         source metadata"""
@@ -49,6 +52,8 @@ class CommandTests(SimpleTestCase):
         result = add_publisher_to_source(test_df, 'dau')
         key_exist = 'SOURCESYSTEM' in result[0]
         self.assertTrue(key_exist)
+
+    """Test cases for validate_source_metadata """
 
     def test_get_required_fields_for_source_validation(self):
         """Test for Creating list of fields which are Required"""
@@ -65,6 +70,8 @@ class CommandTests(SimpleTestCase):
 
         received_list = get_required_fields_for_source_validation(data)
         self.assertEqual(required_list, received_list)
+
+    """Test cases for transform_source_metadata """
 
     def test_create_target_metadata_dict(self):
         """Test to check transformation of source to target schema and
@@ -136,8 +143,6 @@ class CommandTests(SimpleTestCase):
         result_data_dict = create_target_metadata_dict(target_mapping_dict,
                                                        source_data_dict)
 
-        self.assertEqual(result_data_dict, expected_data_dict)
-
         self.assertEqual(result_data_dict[0]['Course'].get('CourseCode'),
                          expected_data_dict[0]['Course'].get('CourseCode'))
         self.assertEqual(
@@ -205,6 +210,8 @@ class CommandTests(SimpleTestCase):
             'EducationalContext'),
             expected_data_educational_context_N['Course'].get(
                 'EducationalContext'))
+
+    """Test cases for validate_target_metadata """
 
     def test_get_required_recommended_fields_for_target_validation(self):
         """Test for Creating list of fields which are Required and

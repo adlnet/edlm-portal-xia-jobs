@@ -50,7 +50,6 @@ def post_data_to_xis(data):
         xis_response = requests.post(url=get_api_endpoint(),
                                      data=renamed_data, headers=headers,
                                      timeout=6.0)
-
         # Receiving XIS response after validation and updating metadata_ledger
         if xis_response.status_code == 201:
             MetadataLedger.objects.filter(
@@ -75,7 +74,8 @@ def post_data_to_xis(data):
 
 
 def check_records_to_load_into_xis():
-    """Retrieve number of Metadata_Ledger records in XIA to load into XIS """
+    """Retrieve number of Metadata_Ledger records in XIA to load into XIS  and
+    calls the post_data_to_xis accordingly"""
 
     data = MetadataLedger.objects.filter(
         record_lifecycle_status='Active',
