@@ -5,7 +5,10 @@ from django.core.management.base import BaseCommand
 from core.models import XIAConfiguration
 from core.models import MetadataLedger
 from django.utils import timezone
-from core.management.utils.xsr_client import read_json_data
+from core.management.utils.xss_client import read_json_data
+from core.management.utils.xia_internal import get_key_dict, \
+    get_target_metadata_key_value, \
+    replace_field_on_target_schema
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -59,31 +62,6 @@ def create_target_metadata_dict(target_mapping_dict, source_data_dict):
     return target_data_dict
 
 
-def replace_field_on_target_schema(ind1, target_section_name,
-                                   target_field_name,
-                                   target_data_dict):
-    """Replacing values in field referring target schema"""
-    if target_data_dict[ind1][target_section_name][
-        target_field_name] == 'y' or \
-            target_data_dict[ind1][
-                target_section_name][
-                target_field_name] == 'Y':
-        target_data_dict[ind1][
-            target_section_name][
-            target_field_name] = 'Mandatory'
-    else:
-        if target_data_dict[ind1][
-            target_section_name][
-            target_field_name] == 'n' or \
-                target_data_dict[ind1][
-                    target_section_name][
-                    target_field_name] == 'N':
-            target_data_dict[ind1][
-                target_section_name][
-                target_field_name] = 'Non - ' \
-                                     'Mandatory'
-
-
 def store_transformed_source_metadata(key_value, key_value_hash,
                                       target_data_dict,
                                       hash_value):
@@ -116,39 +94,29 @@ def transform_source_using_key(source_data_dict, target_mapping_dict):
                                                            [table_column_name])
             # Looping through target values in dictionary
             for ind1 in target_data_dict:
+                key = get_key_dict(None, None)
+
                 for target_section_name in target_data_dict[ind1]:
-                    for target_field_name in target_data_dict[ind1][
-                            target_section_name]:
+                    for target_field_name in \
+                            target_data_dict[ind1][target_section_name]:
                         # Replacing values in field referring target schema
-                        if target_section_name == 'Course' and \
-                                target_field_name == 'EducationalContext':
-                            replace_field_on_target_schema(ind1,
-                                                           target_section_name
-                                                           , target_field_name,
-                                                           target_data_dict)
-                        # Create key_hash value to
-                        if target_field_name == 'CourseCode' or \
-                                'CourseProviderName':
-                            key_course = target_data_dict[ind1][
-                                target_section_name].get(
-                                'CourseCode')
-                            key_source = target_data_dict[ind1][
-                                target_section_name].get(
-                                'CourseProviderName')
-                            if key_source:
-                                if key_course:
-                                    key_value = '_'.join(
-                                        [key_source, key_course])
+                        replace_field_on_target_schema(ind1,
+                                                       target_section_name
+                                                       , target_field_name,
+                                                       target_data_dict)
+                        # Key creation for target metadata
+                        key = get_target_metadata_key_value(
+                            target_field_name, target_data_dict[ind1]
+                            [target_section_name])
 
-                key_value_hash = hashlib.md5(
-                    key_value.encode('utf-8')).hexdigest()
-
-                hash_value = hashlib.md5(
-                    str(target_data_dict[ind1]).encode(
-                        'utf-8')).hexdigest()
-                store_transformed_source_metadata(key_value, key_value_hash,
-                                                  target_data_dict[ind1],
-                                                  hash_value)
+                    if key['key_value']:
+                        hash_value = hashlib.md5(
+                            str(target_data_dict[ind1]).encode(
+                                'utf-8')).hexdigest()
+                        store_transformed_source_metadata(key['key_value'],
+                                                          key['key_value_hash'],
+                                                          target_data_dict[ind1],
+                                                          hash_value)
 
 
 class Command(BaseCommand):

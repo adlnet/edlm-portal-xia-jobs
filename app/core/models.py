@@ -10,11 +10,11 @@ class XIAConfiguration(models.Model):
                                  help_text='Enter the source file to extract '
                                            'data from.')
     source_metadata_schema = models.CharField(
-        default='DAU_Source_Validate_Schema.json', max_length=200,
+        default='DAU_source_validate_schema.json', max_length=200,
         help_text='Enter the dau '
                   'schema file')
     source_target_mapping = models.CharField(
-        default='p2881_target_metadata_schema.json', max_length=200,
+        default='DAU_p2881_target_metadata_schema.json', max_length=200,
         help_text='Enter the schema '
                   'file to map '
                   'target.')

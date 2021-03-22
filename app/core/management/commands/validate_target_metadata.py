@@ -1,9 +1,9 @@
-import hashlib
 import logging
 from django.core.management.base import BaseCommand
 from core.models import XIAConfiguration
 from core.models import MetadataLedger
-from core.management.utils.xsr_client import read_json_data
+from core.management.utils.xss_client import read_json_data
+from core.management.utils.xia_internal import get_target_metadata_key_value
 from django.utils import timezone
 
 logger = logging.getLogger('dict_config_logger')
@@ -62,12 +62,15 @@ def get_target_metadata_for_validation():
 
 
 def store_target_metadata_validation_status(target_data_dict, key_value_hash,
-                                            validation_result):
+                                            validation_result,
+                                            record_status_result):
     """Storing validation result in MetadataLedger"""
     target_data_dict.filter(
         target_metadata_key_hash=key_value_hash).update(
         target_metadata_validation_status=validation_result,
-        target_metadata_validation_date=timezone.now())
+        target_metadata_validation_date=timezone.now(),
+        record_lifecycle_status=record_status_result,
+        metadata_record_inactivation_date=timezone.now())
 
 
 def validate_target_using_key(target_data_dict, required_dict,
@@ -79,6 +82,7 @@ def validate_target_using_key(target_data_dict, required_dict,
     for ind in range(len_target_metadata):
         for val in target_data_dict[ind]:
             validation_result = 'Y'
+            record_status_result = 'Active'
             for column in target_data_dict[ind][val]:
                 required_columns = required_dict[column]
                 recommended_columns = recommended_dict[column]
@@ -86,6 +90,7 @@ def validate_target_using_key(target_data_dict, required_dict,
                     if key in required_columns:
                         if not target_data_dict[ind][val][column][key]:
                             validation_result = 'N'
+                            record_status_result = 'Inactive'
                             logger.error(
                                 "Record " + str(
                                     ind) + " does not have all REQUIRED "
@@ -98,18 +103,17 @@ def validate_target_using_key(target_data_dict, required_dict,
                                     ind) + " does not have all "
                                            "RECOMMENDED fields. " + key
                                 + " field is empty")
-                    if key == 'CourseCode' or 'CourseProviderName':
-                        key_course = target_data_dict[ind][val][
-                            column].get('CourseCode')
-                        key_source = target_data_dict[ind][val][
-                            column].get('CourseProviderName')
-                        key_value = '_'.join(
-                            [str(key_source), str(key_course)])
-                        key_value_hash = hashlib.md5(
-                            key_value.encode('utf-8')).hexdigest()
-                store_target_metadata_validation_status(target_data_dict,
-                                                        key_value_hash,
-                                                        validation_result)
+                    # Key creation for target metadata
+                    key = \
+                        get_target_metadata_key_value(key,
+                                                      target_data_dict[ind][
+                                                          val][column]
+                                                      )
+
+                    if key['key_value']:
+                        store_target_metadata_validation_status(
+                            target_data_dict,key['key_value_hash'],
+                            validation_result, record_status_result)
 
 
 class Command(BaseCommand):

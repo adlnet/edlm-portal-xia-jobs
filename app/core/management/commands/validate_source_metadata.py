@@ -1,9 +1,9 @@
-import hashlib
 import logging
 from django.core.management.base import BaseCommand
 from core.models import XIAConfiguration
 from core.models import MetadataLedger
-from core.management.utils.xsr_client import read_json_data
+from core.management.utils.xss_client import read_json_data
+from core.management.utils.xia_internal import get_source_metadata_key_value
 from django.utils import timezone
 
 logger = logging.getLogger('dict_config_logger')
@@ -46,14 +46,17 @@ def get_source_metadata_for_validation():
     return source_data_dict
 
 
-def store_source_metadata_validation_status(source_data_dict, key_value_hash,
-                                            validation_result):
+def store_source_metadata_validation_status(source_data_dict,
+                                            key_value_hash, validation_result,
+                                            record_status_result):
     """Storing validation result in MetadataLedger"""
 
     source_data_dict.filter(
         source_metadata_key_hash=key_value_hash).update(
         source_metadata_validation_status=validation_result,
-        source_metadata_validation_date=timezone.now())
+        source_metadata_validation_date=timezone.now(),
+        record_lifecycle_status=record_status_result,
+        metadata_record_inactivation_date=timezone.now())
 
 
 def validate_source_using_key(source_data_dict, required_column_name):
@@ -65,20 +68,16 @@ def validate_source_using_key(source_data_dict, required_column_name):
         # Updating default validation for all records
         key_value_hash = ''
         validation_result = 'Y'
+        record_status_result = 'Active'
         for table_column_name in source_data_dict[ind]:
             for column in source_data_dict[ind][table_column_name]:
                 if column in required_column_name:
-                    if column == 'COURSEID' or 'SOURCESYSTEM':
-                        # Creating key_hash values
-                        key_course = source_data_dict[ind][table_column_name].\
-                            get(
-                            'COURSEID')
-                        key_source = source_data_dict[ind][table_column_name].\
-                            get(
-                            'SOURCESYSTEM')
-                        key_value = '_'.join([key_source, str(key_course)])
-                        key_value_hash = hashlib.md5(
-                            key_value.encode('utf-8')).hexdigest()
+                    # Key creation for source metadata
+                    key = \
+                        get_source_metadata_key_value(column,
+                                                      source_data_dict[ind]
+                                                      [table_column_name])
+
                     # Checking if value present in required fields
                     if not source_data_dict[ind][table_column_name][column]:
                         logger.error(
@@ -88,10 +87,12 @@ def validate_source_using_key(source_data_dict, required_column_name):
                             + column + " field is empty")
                         # Update validation result if not validated
                         validation_result = 'N'
+                        record_status_result = 'Inactive'
         # Calling function to update validation status
         store_source_metadata_validation_status(source_data_dict,
-                                                key_value_hash,
-                                                validation_result)
+                                                key['key_value_hash'],
+                                                validation_result,
+                                                record_status_result)
 
 
 class Command(BaseCommand):

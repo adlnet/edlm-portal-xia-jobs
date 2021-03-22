@@ -4,6 +4,7 @@ from django.core.management.base import BaseCommand
 from core.models import XIAConfiguration
 from core.models import MetadataLedger
 from core.management.utils.xsr_client import read_source_file
+from core.management.utils.xia_internal import get_source_metadata_key_value
 from django.utils import timezone
 
 logger = logging.getLogger('dict_config_logger')
@@ -70,16 +71,13 @@ def extract_metadata_using_key(source_data_dict):
         # creating hash value of metadata
         hash_value = hashlib.md5(str(temp_val).encode('utf-8')).hexdigest()
         for k1, v1 in source_data_dict[temp_key].items():
-            # creating key value with required fields
-            if k1 == 'COURSEID' or 'SOURCESYSTEM':
-                key_course = source_data_dict[temp_key].get('COURSEID')
-                key_source = source_data_dict[temp_key].get('SOURCESYSTEM')
-                key_value = '_'.join([key_source, str(key_course)])
-                key_value_hash = hashlib.md5(
-                                key_value.encode('utf-8')).hexdigest()
+            # Key creation for source metadata
+            key = \
+                get_source_metadata_key_value(k1, source_data_dict[temp_key])
         # Call store function with key, hash of key, hash of metadata, metadata
-        store_source_metadata(key_value, key_value_hash, hash_value,
-                              temp_val)
+
+        store_source_metadata(key['key_value'], key['key_value_hash'],
+                              hash_value, temp_val)
 
 
 class Command(BaseCommand):
