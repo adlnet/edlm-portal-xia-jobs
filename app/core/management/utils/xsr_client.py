@@ -1,32 +1,44 @@
-import os
 import logging
+import os
+import xml.etree.ElementTree as element_Tree
+
 import pandas as pd
 import requests
-import xml.etree.ElementTree as ET
 
 logger = logging.getLogger('dict_config_logger')
 
 
-def get_xsr_endpoint():
+def get_xsr_api_endpoint():
     """Setting API endpoint from XIA and XIS communication """
-    xsr_endpoint = os.environ.get('XSR_ENDPOINT')
-    return xsr_endpoint
+    xsr_api_endpoint = os.environ.get('XSR_API_ENDPOINT')
+    return xsr_api_endpoint
+
+
+def get_xsr_api_response():
+    """Function to get api response from xsr endpoint"""
+    # url of rss feed
+    url = get_xsr_api_endpoint()
+
+    # creating HTTP response object from given url
+    try:
+        resp = requests.get(url)
+    except requests.exceptions.RequestException as e:
+        logger.error(e)
+        raise SystemExit('Exiting! Can not make connection with XSR.')
+
+    return resp
 
 
 def extract_source():
     """function to parse xml xsr data and convert to dictionary"""
 
-    # url of rss feed
-    url = get_xsr_endpoint()
-
-    # creating HTTP response object from given url
-    resp = requests.get(url)
+    resp = get_xsr_api_response()
 
     # saving the xml file
     xml_content = resp.text
 
     # create element tree object
-    xsr_root = ET.fromstring(xml_content)
+    xsr_root = element_Tree.fromstring(xml_content)
 
     xsr_items = []
     for item in xsr_root.findall('.//Table'):
