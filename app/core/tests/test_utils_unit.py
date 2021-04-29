@@ -10,6 +10,7 @@ from core.management.utils.xia_internal import (dict_flatten,
                                                 flatten_dict_object,
                                                 flatten_list_object,
                                                 get_key_dict,
+                                                get_publisher_detail,
                                                 get_source_metadata_key_value,
                                                 get_target_metadata_key_value,
                                                 replace_field_on_target_schema,
@@ -35,6 +36,16 @@ class UtilsTests(TestSetUp):
     """Unit Test cases for utils """
 
     # Test cases for XIA_INTERNAL
+
+    def test_get_publisher_detail(self):
+        """Test to retrieve publisher from XIA configuration"""
+        with patch('core.management.utils.xia_internal'
+                   '.XIAConfiguration.objects') as xdsCfg:
+            xiaConfig = XIAConfiguration(publisher='DAU')
+            xdsCfg.first.return_value = xiaConfig
+            return_from_function = get_publisher_detail()
+            self.assertEqual(xiaConfig.publisher, return_from_function)
+
     @data(('test_key', 'test_key_hash'), ('test_key1', 'test_key_hash2'))
     @unpack
     def test_get_key_dict(self, first_value, second_value):

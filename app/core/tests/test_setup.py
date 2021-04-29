@@ -249,6 +249,10 @@ class TestSetUp(TestCase):
 
         self.test_required_column_names = ['SOURCESYSTEM', 'crs_header',
                                            'Start_date', 'End_date']
+        self.test_data = {
+            "key1": ["val1"],
+            "key2": ["val2"],
+            "key3": ["val3"]}
         return super().setUp()
 
     def tearDown(self):

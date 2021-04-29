@@ -10,7 +10,9 @@ class XIAConfigurationAdmin(admin.ModelAdmin):
     list_display = (
         'publisher',
         'source_metadata_schema',
-        'source_target_mapping', 'target_metadata_schema',)
+        'source_target_mapping',
+        'target_metadata_schema',)
     fields = ['publisher',
               'source_metadata_schema',
-              ('source_target_mapping', 'target_metadata_schema')]
+              ('source_target_mapping',
+               'target_metadata_schema')]
