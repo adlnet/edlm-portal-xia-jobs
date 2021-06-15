@@ -3,5 +3,5 @@
 if [ -n "$DJANGO_SUPERUSER_USERNAME" ] && [ -n "$DJANGO_SUPERUSER_PASSWORD" ] ; then
     (cd openlxp-xia-dau; python manage.py createsuperuser --no-input)
 fi
-(cd openlxp-xia-dau; gunicorn app.wsgi --reload --user www-data --bind 0.0.0.0:8010 --workers 3) &
+(cd openlxp-xia-dau; gunicorn openlxp_xia_dau_project.wsgi --reload --user www-data --bind 0.0.0.0:8010 --workers 3) &
 nginx -g "daemon off;"

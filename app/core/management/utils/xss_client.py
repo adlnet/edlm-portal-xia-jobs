@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 
 import boto3
 
@@ -11,7 +12,7 @@ logger = logging.getLogger('dict_config_logger')
 
 def get_aws_bucket_name():
     """function returns the source bucket name"""
-    bucket_name = 'xiaschema'
+    bucket_name = os.environ.get('BUCKET_NAME')
     return bucket_name
 
 

@@ -2,10 +2,10 @@ import hashlib
 import logging
 from unittest.mock import patch
 
-import pandas as pd
 from ddt import data, ddt, unpack
 from django.test import tag
 
+from core.management.utils.notification import send_notifications
 from core.management.utils.xia_internal import (dict_flatten,
                                                 flatten_dict_object,
                                                 flatten_list_object,
@@ -23,7 +23,7 @@ from core.management.utils.xss_client import (
     get_aws_bucket_name, get_required_fields_for_validation,
     get_source_validation_schema, get_target_metadata_for_transformation,
     get_target_validation_schema)
-from core.models import XIAConfiguration
+from core.models import XIAConfiguration, XISConfiguration, XSRConfiguration
 
 from .test_setup import TestSetUp
 
@@ -338,22 +338,37 @@ class UtilsTests(TestSetUp):
 
     # Test cases for XIS_CLIENT
 
-    def test_get_api_endpoint(self):
+    def test_get_xis_api_endpoint(self):
         """Test to check if API endpoint is present"""
-        result_api_value = get_xis_api_endpoint()
-        self.assertTrue(result_api_value)
+        with patch('core.management.utils.xis_client'
+                   '.XISConfiguration.objects') as xisCfg:
+            xisConfig = XISConfiguration(
+                xis_api_endpoint=self.xis_api_endpoint_url)
+            xisCfg.first.return_value = xisConfig
+            return_from_function = get_xis_api_endpoint()
+            self.assertEqual(xisConfig.xis_api_endpoint, return_from_function)
 
     # Test cases for XSR_CLIENT
 
-    def test_get_xsr_endpoint(self):
-        """Test to check if XSR endpoint is present"""
-        result_xsr_endpoint = get_xsr_api_endpoint()
-        self.assertTrue(result_xsr_endpoint)
+    def test_get_xsr_api_endpoint(self):
+        """Test to check if API endpoint is present"""
+        with patch('core.management.utils.xsr_client'
+                   '.XSRConfiguration.objects') as xsrCfg:
+            xsrConfig = XSRConfiguration(
+                xsr_api_endpoint=self.xsr_api_endpoint_url)
+            xsrCfg.first.return_value = xsrConfig
+            return_from_function = get_xsr_api_endpoint()
+            self.assertEqual(xsrConfig.xsr_api_endpoint, return_from_function)
 
     def test_get_xsr_api_response(self):
         """Test to Function to get api response from xsr endpoint"""
-        result_xsr_api_response = get_xsr_api_response()
-        self.assertTrue(result_xsr_api_response)
+        with patch('core.management.utils.xsr_client.get_xsr_api_endpoint') \
+                as xsr_ep, patch('requests.get') as response_obj:
+            xsr_ep.return_value = self.xsr_api_endpoint_url
+            response_obj.return_value = response_obj
+
+            result_xsr_api_response = get_xsr_api_response()
+            self.assertTrue(result_xsr_api_response)
 
     @patch('core.management.utils.xsr_client.extract_source',
            return_value=dict({1: {'a': 'b'}}))
@@ -361,7 +376,7 @@ class UtilsTests(TestSetUp):
         """test to check if data is present for extraction """
 
         result_data = read_source_file()
-        self.assertIsInstance(result_data, pd.DataFrame)
+        self.assertIsInstance(result_data, list)
 
     # Test cases for XSS_CLIENT
 
@@ -423,3 +438,13 @@ class UtilsTests(TestSetUp):
             return_from_function = get_target_metadata_for_transformation()
             self.assertEqual(read_obj.return_value,
                              return_from_function)
+
+    # Test cases for NOTIFICATION
+    def test_send_notifications(self):
+        """Test for function to send emails of log file to personas"""
+        with patch('core.management.utils.notification'
+                   '.EmailMessage') as mock_send, \
+                patch('core.management.utils.notification'
+                      '.boto3.client'):
+            send_notifications(self.receive_email_list, self.sender_email)
+            self.assertEqual(mock_send.call_count, 2)

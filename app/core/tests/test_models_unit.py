@@ -1,7 +1,8 @@
 from django.test import SimpleTestCase, tag
 from django.utils import timezone
 
-from core.models import MetadataLedger, XIAConfiguration
+from core.models import (MetadataLedger, XIAConfiguration, XISConfiguration,
+                         XSRConfiguration)
 
 
 @tag('unit')
@@ -25,6 +26,28 @@ class ModelTests(SimpleTestCase):
                          source_target_mapping)
         self.assertEqual(xiaConfig.target_metadata_schema,
                          target_metadata_schema)
+
+    def test_create_xsr_configuration(self):
+        """Test that creating a new XSR Configuration entry is successful
+        with defaults """
+        xsr_api_endpoint = 'https://example'
+
+        xsrConfig = XSRConfiguration(
+            xsr_api_endpoint=xsr_api_endpoint)
+
+        self.assertEqual(xsrConfig.xsr_api_endpoint,
+                         xsr_api_endpoint)
+
+    def test_create_xis_configuration(self):
+        """Test that creating a new XSR Configuration entry is successful
+        with defaults """
+        xis_api_endpoint = 'https://example'
+
+        xisConfig = XISConfiguration(
+            xis_api_endpoint=xis_api_endpoint)
+
+        self.assertEqual(xisConfig.xis_api_endpoint,
+                         xis_api_endpoint)
 
     def test_metadata_ledger(self):
         """Test for a new Metadata_Ledger entry is successful with defaults"""

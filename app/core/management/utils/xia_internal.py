@@ -1,3 +1,4 @@
+import datetime
 import hashlib
 import logging
 
@@ -28,8 +29,9 @@ def get_source_metadata_key_value(data_dict):
 
     for item in field:
         if not data_dict.get(item):
-            logger.info('Field name ' + item + ' is missing for '
-                                               'key creation')
+            logger.error('Field name ' + item + ' is missing for '
+                                                'key creation')
+            return None
         field_values.append(data_dict.get(item))
 
     # Key value creation for source metadata
@@ -106,7 +108,6 @@ def get_target_metadata_key_value(data_dict):
 
     # Key dictionary creation for source metadata
     key = get_key_dict(key_value, key_value_hash)
-
     return key
 
 
@@ -221,3 +222,9 @@ def update_flattened_object(str_obj, prefix, flatten_dict):
     """function to update flattened object to dict variable"""
 
     flatten_dict.update({prefix: str_obj})
+
+
+def convert_date_to_isoformat(date):
+    if isinstance(date, datetime.datetime):
+        date = date.isoformat()
+    return date

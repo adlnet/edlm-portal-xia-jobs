@@ -1,16 +1,19 @@
 import logging
-import os
 import xml.etree.ElementTree as element_Tree
 
 import pandas as pd
 import requests
+
+from core.models import XSRConfiguration
 
 logger = logging.getLogger('dict_config_logger')
 
 
 def get_xsr_api_endpoint():
     """Setting API endpoint from XIA and XIS communication """
-    xsr_api_endpoint = os.environ.get('XSR_API_ENDPOINT')
+    logger.debug("Retrieve xsr_api_endpoint from XSR configuration")
+    xsr_data = XSRConfiguration.objects.first()
+    xsr_api_endpoint = xsr_data.xsr_api_endpoint
     return xsr_api_endpoint
 
 
@@ -62,4 +65,4 @@ def read_source_file():
     logger.info("Changing null values to None for source dataframe")
     std_source_df = source_df.where(pd.notnull(source_df),
                                     None)
-    return std_source_df
+    return [std_source_df]
