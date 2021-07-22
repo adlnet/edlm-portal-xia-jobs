@@ -2,7 +2,7 @@ mysqlclient>=2.0.3,<2.1.0
 
 django-mysql>=3.10.0,<3.11.0
 
-Django>=3.1.4,<3.2.0
+Django>=3.1.6,<3.2.0
 
 djangorestframework>=3.12.2,<3.13.0
 boto3~=1.16.54
@@ -26,5 +26,13 @@ requests~=2.25.1
 coverage>=5.5, < 5.6
 
 ddt
+
+celery>=5.1.1, <5.2.0
+
+redis==3.5.3
+
+django-celery-beat>=2.2.0, <2.3.0
+
+django-celery-results>=2.1.0, <2.2.0
 
 django_ses==2.0.0

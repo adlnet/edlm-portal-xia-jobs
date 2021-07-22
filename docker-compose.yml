@@ -7,7 +7,6 @@ services:
       - '3306:3306'
     environment:
       MYSQL_DATABASE: "${DB_NAME}"
-#      MYSQL_USER: 'root'
       MYSQL_PASSWORD: "${DB_PASSWORD}"
       MYSQL_ROOT_PASSWORD: "${DB_ROOT_PASSWORD}"
       MYSQL_HOST: ''
@@ -43,6 +42,52 @@ services:
     networks:
       - openlxp
 
+  redis:
+    image: redis:alpine
+    networks:
+      - openlxp
+
+  celery:
+    build:
+      context: .
+    command: celery -A openlxp_xia_dau_project worker -l info
+    volumes:
+      - ./app:/opt/app/openlxp-xia-dau
+    environment:
+      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
+      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
+    env_file:
+      - ./.env
+    depends_on:
+      - db_xia_dau
+      - redis
+      - app_xia_dau
+    networks:
+      - openlxp
+    restart: on-failure
+
+  celery-beat:
+    build:
+      context: .
+    command: celery -A openlxp_xia_dau_project beat --scheduler django_celery_beat.schedulers:DatabaseScheduler --loglevel=info --pidfile=/tmp/celerybeat.pid
+    volumes:
+      - ./app:/opt/app/openlxp-xia-dau
+    environment:
+      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
+      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
+    env_file:
+      - ./.env
+    depends_on:
+      - db_xia_dau
+      - redis
+      - app_xia_dau
+    networks:
+      - openlxp
+    restart: on-failure
+
 networks:
   openlxp:
     external: true
+
+volumes:
+  mysql_data:
