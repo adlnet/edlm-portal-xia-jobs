@@ -42,11 +42,11 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-
+    'rest_framework',
+    'openlxp_notifications',
+    'openlxp_xia',
     'django_celery_beat',
     'django_celery_results',
-
-    'rest_framework',
     'core',
 ]
 
@@ -93,6 +93,8 @@ DATABASES = {
         'PORT': 3306,
     }
 }
+
+DEFAULT_AUTO_FIELD='django.db.models.AutoField'
 
 REST_FRAMEWORK = {
     # Use Django's standard `django.contrib.auth` permissions,

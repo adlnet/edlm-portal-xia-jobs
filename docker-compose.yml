@@ -50,7 +50,7 @@ services:
   celery:
     build:
       context: .
-    command: celery -A openlxp_xia_dau_project worker -l info
+    command: celery -A openlxp_xia_dau_project worker -l info --pool=solo
     volumes:
       - ./app:/opt/app/openlxp-xia-dau
     environment:
@@ -85,9 +85,14 @@ services:
       - openlxp
     restart: on-failure
 
+  flower:
+    image: mher/flower:0.9.7
+    command: [ "flower", "--broker=redis://redis:6379/0", "--port=8888" ]
+    ports:
+      - 8888:8888
+    networks:
+      - openlxp
+
 networks:
   openlxp:
     external: true
-
-volumes:
-  mysql_data:

@@ -1,8 +1,10 @@
+import hashlib
 import logging
 import xml.etree.ElementTree as element_Tree
 
 import pandas as pd
 import requests
+from openlxp_xia.management.utils.xia_internal import get_key_dict
 
 from core.models import XSRConfiguration
 
@@ -66,3 +68,28 @@ def read_source_file():
     std_source_df = source_df.where(pd.notnull(source_df),
                                     None)
     return [std_source_df]
+
+
+def get_source_metadata_key_value(data_dict):
+    """Function to create key value for source metadata """
+    # field names depend on source data and SOURCESYSTEM is system generated
+    field = ['crs_header', 'SOURCESYSTEM']
+    field_values = []
+
+    for item in field:
+        if not data_dict.get(item):
+            logger.error('Field name ' + item + ' is missing for '
+                                                'key creation')
+            return None
+        field_values.append(data_dict.get(item))
+
+    # Key value creation for source metadata
+    key_value = '_'.join(field_values)
+
+    # Key value hash creation for source metadata
+    key_value_hash = hashlib.md5(key_value.encode('utf-8')).hexdigest()
+
+    # Key dictionary creation for source metadata
+    key = get_key_dict(key_value, key_value_hash)
+
+    return key
