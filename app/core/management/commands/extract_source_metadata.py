@@ -81,7 +81,7 @@ def extract_metadata_using_key(source_df):
                 'MetadataLedger')
     for temp_key, temp_val in source_data_dict.items():
         # creating hash value of metadata
-        hash_value = hashlib.md5(str(temp_val).encode('utf-8')).hexdigest()
+        hash_value = hashlib.sha512(str(temp_val).encode('utf-8')).hexdigest()
         # key dictionary creation function called
         key = \
             get_source_metadata_key_value(source_data_dict[temp_key])
