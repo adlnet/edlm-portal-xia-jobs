@@ -80,8 +80,7 @@ def extract_metadata_using_key(source_df):
     logger.info('Getting existing records or creating new record to '
                 'MetadataLedger')
     for temp_key, temp_val in source_data_dict.items():
-        # creating hash value of metadata
-        hash_value = hashlib.sha512(str(temp_val).encode('utf-8')).hexdigest()
+
         # key dictionary creation function called
         key = \
             get_source_metadata_key_value(source_data_dict[temp_key])
@@ -92,6 +91,10 @@ def extract_metadata_using_key(source_df):
         temp_val_convert = json.dumps(temp_val,
                                       default=convert_date_to_isoformat)
         temp_val_json = json.loads(temp_val_convert)
+
+        # creating hash value of metadata
+        hash_value = hashlib.sha512(str(temp_val_json).encode('utf-8')).\
+            hexdigest()
         if key:
             store_source_metadata(key['key_value'], key['key_value_hash'],
                                   hash_value, temp_val_json)

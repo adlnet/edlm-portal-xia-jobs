@@ -21,9 +21,12 @@ The DAU XIA implements six core workflows, as follows:
 5. `Load`: Pushes transformed and validated learning experience metadata to the target Experience Index Service (XIS) for further processing.
 
 6. `Log`: Records error, warning, informational, and debug events which can be reviewed and monitored.
+   
+   
+   #### Note : Step 2 to 5 are executed by the openlxp-xia package which is imported. The celery task calls the commands from the package and executes it.
 
 # Prerequisites
-`Python >=3.7` : Download and install python from here [Python](https://www.python.org/downloads/).
+`Python >=3.7` : Download and install Python from here [Python](https://www.python.org/downloads/).
 
 `Docker` : Download and install Docker from here [Docker](https://www.docker.com/products/docker-desktop).
 
@@ -40,7 +43,7 @@ To run this project, you will need to add the following environment variables to
 
 `DB_ROOT_PASSWORD` - Database root password
 
-`DB_HOST` - Enter datebase host
+`DB_HOST` - Enter database host
 
 `DJANGO_SUPERUSER_USERNAME` - Django admin user name
 
@@ -102,6 +105,9 @@ To run this project, you will need to add the following environment variables to
 This API connects with DAU Repository, where metadata is stored.
 
 
+#### Note : Validation, transformation & loading are executed by the openlxp-xia package which is imported. The celery task calls the commands from the package and executes it.
+
+
 3. `Add xis configuration`: Configure Experience Index Services (XIS): 
 
 `Xis metadata api endpoint`: API endpoint for XIS where metadata will get stored.
@@ -141,6 +147,10 @@ Example:
     
     `Overwrite`: Check the box if existing values need to be overwritten.
 
+
+   #### Note : Email notifications are executed by the openlxp-notifications package which is imported. The celery task calls the commands from the package and executes it.
+
+
 6. `Add sender email configuration`: Configure the sender email address from which conformance alerts are sent.
 
 7. `Add receiver email configuration` : 
@@ -160,7 +170,7 @@ Add an email list to send conformance alerts. When the email gets added, an emai
 
     `FAQ URL` : Add FAQ URL here.
 
-    `Unsubscribe Email ID`: Add email ID to which Unsubscriber will send the emails.
+    `Unsubscribe Email ID`: Add email ID to which Unsubscribe will send the emails.
 
     `Logs Type`: Choose how logs will get sent to the Owners/Managers. Logs can be sent in two ways Attachment or Message.
 
@@ -168,7 +178,7 @@ Add an email list to send conformance alerts. When the email gets added, an emai
 
     For Experience Management Service and Experience discovery services, choose Message as a log type. 
 
-    `HTML File` : Upload the HTML file here, this HTML file helps to beutify the email body.
+    `HTML File` : Upload the HTML file here, this HTML file helps to beautify the email body.
 
     Please take the reference HTML file from the below path.
 
@@ -195,7 +205,7 @@ To run ETL tasks run below API:
 (Note: Change localhost with XIA host)
 
 2. Periodically through celery beat: 
- On the admin page add periodic task and it's schedule. On selected time interval celery task will run.
+ On the admin page add a periodic task, and it's schedule. On selected time interval celery task will run.
 
 
 # Logs
