@@ -23,8 +23,12 @@ class TestSetUp(TestCase):
         }
 
         self.key_value = "TestData 123_DAU"
-        self.key_value_hash = "6acf7689ea81a1f792e7668a23b1acf5"
-        self.hash_value = "29f781517cba9c121d6b677803069beb"
+        self.key_value_hash = "902b044e8abbea677ac6b5d75b70b9c7d819a1d246" \
+                              "10812898f4c168fa2b7c4b85dc7143605f0e8da20ce" \
+                              "73f65cbcae0fa08f0d21d40dbb9d9eafd876b8575a5"
+        self.hash_value = "9cb7277d49f4649452bf16455f462258b85345251b4fe655" \
+                          "7000acf7812bb0b3db399fc2132bef042923ef6843c3026fe" \
+                          "1d0bc0914a378a34ad3d9141f1ee38b"
 
         self.test_data = {
             "key1": ["val1"],
