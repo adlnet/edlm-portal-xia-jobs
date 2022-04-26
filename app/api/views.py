@@ -2,20 +2,26 @@ import logging
 
 from celery.result import AsyncResult
 from django.http import JsonResponse
-from rest_framework import permissions
-from rest_framework.decorators import api_view, permission_classes
+from rest_framework import permissions, status
+from rest_framework.decorators import permission_classes
+from rest_framework.response import Response
+from rest_framework.views import APIView
 
 from core.tasks import execute_xia_automated_workflow
 
 logger = logging.getLogger('dict_config_logger')
 
 
-@api_view(['GET'])
 @permission_classes((permissions.AllowAny,))
-def execute_xia_automated_workflow_api(request):
-    logger.info('XIA workflow api')
-    task = execute_xia_automated_workflow.delay()
-    return JsonResponse({"task_id": task.id}, status=202)
+class WorkflowView(APIView):
+    """Handles HTTP requests for Metadata for XIS"""
+
+    def get(self, request):
+        logger.info('XIA workflow api')
+        task = execute_xia_automated_workflow.delay()
+        response_val = {"task_id": task.id}
+
+        return Response(response_val, status=status.HTTP_202_ACCEPTED)
 
 
 def get_status(request, task_id):

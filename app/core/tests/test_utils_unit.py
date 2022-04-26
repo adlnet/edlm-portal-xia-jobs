@@ -66,3 +66,17 @@ class UtilsTests(TestSetUp):
         result_key_dict = get_source_metadata_key_value(test_dict)
         self.assertEqual(result_key_dict['key_value'], expected_key)
         self.assertEqual(result_key_dict['key_value_hash'], expected_key_hash)
+
+    @data(('key_field1', ''))
+    @unpack
+    def test_get_source_metadata_key_value_fail(self,
+                                                first_value, second_value):
+        """Test key dictionary creation for source"""
+        test_dict = {
+            'LearningResourceIdentifier': first_value,
+            'SOURCESYSTEM': second_value
+        }
+
+        result_key_dict = get_source_metadata_key_value(test_dict)
+
+        self.assertEqual(result_key_dict, None)

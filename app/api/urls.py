@@ -1,12 +1,12 @@
 from django.urls import path
 from rest_framework.routers import DefaultRouter
 
-from api import views
+from api.views import WorkflowView
 
 router = DefaultRouter()
 
 app_name = 'api'
 
 urlpatterns = [
-    path('xia-workflow/', views.execute_xia_automated_workflow_api),
+    path('xia-workflow/', WorkflowView.as_view(), name='xia_workflow'),
 ]
