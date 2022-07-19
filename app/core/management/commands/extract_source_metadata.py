@@ -1,7 +1,7 @@
 import hashlib
 import json
 import logging
-
+import numpy as np
 import pandas as pd
 from django.core.management.base import BaseCommand
 from django.utils import timezone
@@ -10,7 +10,8 @@ from openlxp_xia.management.utils.xia_internal import (
 from openlxp_xia.models import MetadataLedger
 
 from core.management.utils.xsr_client import (get_source_metadata_key_value,
-                                              read_source_file)
+                                              read_source_file, find_dates,
+                                              find_html)
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -74,7 +75,8 @@ def extract_metadata_using_key(source_df):
     """Creating key, hash of key & hash of metadata """
     # Convert source data to dictionary and add publisher to metadata
     source_df = add_publisher_to_source(source_df)
-    source_data_dict = source_df.to_dict(orient='index')
+    source_remove_nan_df = source_df.replace(np.nan, '', regex=True)
+    source_data_dict = source_remove_nan_df.to_dict(orient='index')
 
     logger.info('Setting record_status & deleted_date for updated record')
     logger.info('Getting existing records or creating new record to '
@@ -84,18 +86,20 @@ def extract_metadata_using_key(source_df):
         # key dictionary creation function called
         key = \
             get_source_metadata_key_value(source_data_dict[temp_key])
-
-        # Call store function with key, hash of key, hash of metadata,
-        # metadata
-
-        temp_val_convert = json.dumps(temp_val,
+        # function to convert int to date
+        temp_val_date_convert = find_dates(temp_val)
+        # function to convert HTML to text
+        temp_val_html_convert = find_html(temp_val_date_convert)
+        # function to convert date to iso format
+        temp_val_convert = json.dumps(temp_val_html_convert,
                                       default=convert_date_to_isoformat)
         temp_val_json = json.loads(temp_val_convert)
-
         # creating hash value of metadata
-        hash_value = hashlib.sha512(str(temp_val_json).encode('utf-8')).\
+        hash_value = hashlib.sha512(str(temp_val_json).encode('utf-8')). \
             hexdigest()
         if key:
+            # Call store function with key, hash of key, hash of metadata,
+            # metadata
             store_source_metadata(key['key_value'], key['key_value_hash'],
                                   hash_value, temp_val_json)
 

@@ -1,10 +1,14 @@
+from datetime import datetime
 import hashlib
+import json
 import logging
-import xml.etree.ElementTree as element_Tree
+import html2text
 
+from bs4 import BeautifulSoup
 import pandas as pd
 import requests
-from openlxp_xia.management.utils.xia_internal import get_key_dict
+from openlxp_xia.management.utils.xia_internal import get_key_dict, \
+    dict_flatten, traverse_dict_with_key_list
 
 from core.models import XSRConfiguration
 
@@ -38,23 +42,13 @@ def extract_source():
     """function to parse xml xsr data and convert to dictionary"""
 
     resp = get_xsr_api_response()
+    source_data_dict = json.loads(resp.text)
 
-    # saving the xml file
-    xml_content = resp.text
-
-    # create element tree object
-    xsr_root = element_Tree.fromstring(xml_content)
-
-    xsr_items = []
-    for item in xsr_root.findall('.//Table'):
-        # empty news dictionary
-        xsr_dict = {}
-        # iterate child elements of item
-        for child in item:
-            xsr_dict[child.tag] = child.text
-        # append xsr dictionary to xsr items list
-        xsr_items.append(xsr_dict)
-    return xsr_items
+    logger.info("Retrieving data from source page ")
+    source_df_list = [pd.DataFrame(source_data_dict)]
+    source_df_final = pd.concat(source_df_list).reset_index(drop=True)
+    logger.info("Completed retrieving data from source")
+    return source_df_final
 
 
 def read_source_file():
@@ -73,7 +67,7 @@ def read_source_file():
 def get_source_metadata_key_value(data_dict):
     """Function to create key value for source metadata """
     # field names depend on source data and SOURCESYSTEM is system generated
-    field = ['crs_header', 'SOURCESYSTEM']
+    field = ['shortname', 'SOURCESYSTEM']
     field_values = []
 
     for item in field:
@@ -93,3 +87,51 @@ def get_source_metadata_key_value(data_dict):
     key = get_key_dict(key_value, key_value_hash)
 
     return key
+
+
+def convert_int_to_date(element, target_data_dict):
+    """Convert integer date to date time"""
+    key_list = element.split(".")
+    check_key_dict = target_data_dict
+    check_key_dict = traverse_dict_with_key_list(check_key_dict, key_list)
+    if check_key_dict:
+        if key_list[-1] in check_key_dict:
+            if isinstance(check_key_dict[key_list[-1]], int):
+                check_key_dict[key_list[-1]] = datetime. \
+                    fromtimestamp(check_key_dict[key_list[-1]])
+
+
+def find_dates(data_dict):
+    """Function to convert integer value to date value """
+
+    data_flattened = dict_flatten(data_dict, [])
+
+    for element in data_flattened.keys():
+        element_lower = element.lower()
+        if (element_lower.find("date") != -1 or element_lower.find(
+                "time")) != -1:
+            convert_int_to_date(element, data_dict)
+    return data_dict
+
+
+def convert_html(element, target_data_dict):
+    """Convert HTML to text data"""
+    key_list = element.split(".")
+    check_key_dict = target_data_dict
+    check_key_dict = traverse_dict_with_key_list(check_key_dict, key_list)
+    if check_key_dict:
+        if key_list[-1] in check_key_dict:
+            check_key_dict[key_list[-1]] = \
+                html2text.html2text(check_key_dict[key_list[-1]])
+
+
+def find_html(data_dict):
+    """Function to convert HTML value to text"""
+    data_flattened = dict_flatten(data_dict, [])
+
+    for element in data_flattened.keys():
+        if data_flattened[element]:
+            if bool(BeautifulSoup(str(data_flattened[element]),
+                                  "html.parser").find()):
+                convert_html(element, data_dict)
+    return data_dict
