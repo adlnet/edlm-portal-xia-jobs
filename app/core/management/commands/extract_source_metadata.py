@@ -11,7 +11,7 @@ from openlxp_xia.models import MetadataLedger
 
 from core.management.utils.xsr_client import (get_source_metadata_key_value,
                                               read_source_file, find_dates,
-                                              find_html)
+                                              find_html, add_url_to_course)
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -86,8 +86,10 @@ def extract_metadata_using_key(source_df):
         # key dictionary creation function called
         key = \
             get_source_metadata_key_value(source_data_dict[temp_key])
+        # function to add url to course
+        temp_val_with_url = add_url_to_course(temp_val)
         # function to convert int to date
-        temp_val_date_convert = find_dates(temp_val)
+        temp_val_date_convert = find_dates(temp_val_with_url)
         # function to convert HTML to text
         temp_val_html_convert = find_html(temp_val_date_convert)
         # function to convert date to iso format
