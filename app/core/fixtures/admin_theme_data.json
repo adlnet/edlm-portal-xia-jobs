@@ -3,9 +3,9 @@
         "model": "admin_interface.theme",
         "pk": 1,
         "fields": {
-            "name": "XIA Coursera Configuration Portal",
+            "name": "XIA Moodle Configuration Portal",
             "active": true,
-            "title": "XIA Coursera Configuration Portal",
+            "title": "XIA Moodle Configuration Portal",
             "title_color": "#FFFFFF",
             "title_visible": true,
             "logo": "admin-interface/logo/dodLogo_50.png",

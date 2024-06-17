@@ -6,7 +6,9 @@ from unittest.mock import patch
 from ddt import data, ddt, unpack
 from django.test import tag
 
-from core.management.utils.xsr_client import (convert_int_to_date,
+from core.management.utils.xsr_client import (convert_html,
+                                              convert_int_to_date, find_dates,
+                                              find_html,
                                               get_source_metadata_key_value,
                                               get_xsr_api_endpoint,
                                               get_xsr_api_response,
@@ -58,6 +60,24 @@ class UtilsTests(TestSetUp):
         converted_string = listToString('[1, 2, 3, 4]')
 
         self.assertTrue(isinstance(converted_string, str))
+
+    def test_find_dates(self):
+
+        date_int = {'date': 1718050925}
+        date_dict = find_dates(date_int)
+        self.assertTrue(isinstance(date_dict['date'], datetime))
+
+    def test_find_html(self):
+
+        html_dict = {'html_code': '<h1>This is heading 1</h1>'}
+        converted_html_dict = find_html(html_dict)
+        self.assertTrue(isinstance(converted_html_dict['html_code'], str))
+
+    def test_convert_html(self):
+
+        html_dict = {'html_code': '<h1>This is heading 1</h1>'}
+        convert_html('html_code', html_dict)
+        self.assertTrue(isinstance(html_dict['html_code'], str))
 
     def test_convert_int_to_date(self):
 
