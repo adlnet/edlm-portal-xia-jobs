@@ -27,16 +27,18 @@ class UtilsTests(TestSetUp):
         with patch('core.management.utils.xsr_client'
                    '.XSRConfiguration.objects') as xsrCfg:
             xsrConfig = XSRConfiguration(
-                xsr_api_endpoint=self.xsr_api_endpoint_url)
+                xsr_api_endpoint=self.xsr_api_endpoint_url,
+                token=self.token)
             xsrCfg.first.return_value = xsrConfig
-            return_from_function = get_xsr_api_endpoint()
-            self.assertEqual(xsrConfig.xsr_api_endpoint, return_from_function)
+            api_end, tk = get_xsr_api_endpoint()
+            self.assertEqual(xsrConfig.xsr_api_endpoint, api_end)
+            self.assertEqual(xsrConfig.token, tk)
 
     def test_get_xsr_api_response(self):
         """Test to Function to get api response from xsr endpoint"""
         with patch('core.management.utils.xsr_client.get_xsr_api_endpoint') \
                 as xsr_ep, patch('requests.get') as response_obj:
-            xsr_ep.return_value = self.xsr_api_endpoint_url
+            xsr_ep.return_value = self.xsr_api_endpoint_url, self.token
             response_obj.return_value = response_obj
 
             result_xsr_api_response = get_xsr_api_response()
@@ -55,7 +57,7 @@ class UtilsTests(TestSetUp):
     def test_get_source_metadata_key_value(self, first_value, second_value):
         """Test key dictionary creation for source"""
         test_dict = {
-            'shortname': first_value,
+            'idnumber': first_value,
             'SOURCESYSTEM': second_value
         }
 
@@ -73,7 +75,7 @@ class UtilsTests(TestSetUp):
                                                 first_value, second_value):
         """Test key dictionary creation for source"""
         test_dict = {
-            'shortname': first_value,
+            'idnumber': first_value,
             'SOURCESYSTEM': second_value
         }
 

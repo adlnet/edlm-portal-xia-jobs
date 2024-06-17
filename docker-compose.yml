@@ -2,7 +2,7 @@ version: "3"
 
 services:
   db_xia_moodle:
-    image: mysql:5.7
+    image: mysql:8.4
     ports:
       - '3306:3306'
     environment:
@@ -32,8 +32,8 @@ services:
       AWS_ACCESS_KEY_ID: "${AWS_ACCESS_KEY_ID}"
       AWS_SECRET_ACCESS_KEY: "${AWS_SECRET_ACCESS_KEY}"
       AWS_DEFAULT_REGION: "${AWS_DEFAULT_REGION}"
-      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
-      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
+      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.crt'
+      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.crt'
       SECRET_KEY_VAL: "${SECRET_KEY_VAL}"
     volumes:
       - ./app:/opt/app/openlxp-xia-moodle
@@ -54,8 +54,8 @@ services:
     volumes:
       - ./app:/opt/app/openlxp-xia-moodle
     environment:
-      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
-      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
+      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.crt'
+      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.crt'
     env_file:
       - ./.env
     depends_on:
@@ -73,8 +73,8 @@ services:
     volumes:
       - ./app:/opt/app/openlxp-xia-moodle
     environment:
-      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
-      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.pem'
+      REQUESTS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.crt'
+      AWS_CA_BUNDLE: '/etc/ssl/certs/ca-certificates.crt'
     env_file:
       - ./.env
     depends_on:

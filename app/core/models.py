@@ -9,6 +9,10 @@ class XSRConfiguration(models.Model):
         help_text='Enter the XSR API endpoint',
         max_length=200
     )
+    token = models.CharField(
+        help_text='Enter the XSR Token',
+        max_length=200
+    )
 
     def save(self, *args, **kwargs):
         if not self.pk and XSRConfiguration.objects.exists():
