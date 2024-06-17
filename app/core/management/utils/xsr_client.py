@@ -209,3 +209,13 @@ def find_html(data_dict):
                                   "html.parser").find()):
                 convert_html(element, data_dict)
     return data_dict
+
+
+def add_url_to_course(temp_val):
+    """function to add url to course"""
+    base_url = get_xsr_api_endpoint()
+    base_url = base_url.split("webservice")[0]
+    if temp_val["id"]:
+        url = base_url + "course/view.php?id=" + str(temp_val["id"])
+        temp_val["url"] = url
+    return temp_val
