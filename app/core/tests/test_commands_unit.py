@@ -77,10 +77,6 @@ class CommandTests(TestSetUp):
                 return_value=data_df), \
                 patch(
                     'core.management.commands.extract_source_metadata'
-                    '.add_url_to_course',
-                    return_value=self.source_metadata),\
-                patch(
-                    'core.management.commands.extract_source_metadata'
                     '.get_source_metadata_key_value',
                     return_value=None) as mock_get_source, \
                 patch(
