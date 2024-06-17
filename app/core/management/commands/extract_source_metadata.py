@@ -13,6 +13,7 @@ from core.management.utils.xsr_client import (find_dates, find_html,
                                               read_source_file)
 logger = logging.getLogger('dict_config_logger')
 
+
 def get_source_metadata():
     """Retrieving source metadata"""
     #  Retrieve metadata from agents as a list of sources
@@ -27,6 +28,7 @@ def get_source_metadata():
             logger.error("Source metadata is empty!")
         extract_metadata_using_key(std_source_df)
 
+
 def add_publisher_to_source(source_df):
     """Add publisher column to source metadata and return source metadata"""
     # Get publisher name from system operator
@@ -36,6 +38,7 @@ def add_publisher_to_source(source_df):
     # Assign publisher column to source data
     source_df['SOURCESYSTEM'] = publisher
     return source_df
+
 
 def store_source_metadata(key_value, key_value_hash, hash_value, metadata):
     """Extract data from Experience Source Repository(XSR)
@@ -59,6 +62,7 @@ def store_source_metadata(key_value, key_value_hash, hash_value, metadata):
         source_metadata=metadata,
         source_metadata_hash=hash_value,
         record_lifecycle_status='Active')
+
 
 def extract_metadata_using_key(source_df):
     """Creating key, hash of key & hash of metadata """
@@ -89,6 +93,7 @@ def extract_metadata_using_key(source_df):
             # metadata
             store_source_metadata(key['key_value'], key['key_value_hash'],
                                   hash_value, temp_val_json)
+
 
 class Command(BaseCommand):
     """Django command to extract data from Experience Source Repository (
