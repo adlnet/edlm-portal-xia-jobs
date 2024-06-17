@@ -131,7 +131,6 @@ def read_source_file():
     xsr_items = extract_source()
     # convert xsr dictionary list to Dataframe
     source_df = pd.DataFrame(xsr_items)
-    source_df.to_csv("file_name.csv", sep='\t', encoding='utf-8')
     logger.info("Changing null values to None for source dataframe")
     std_source_df = source_df.where(pd.notnull(source_df),
                                     None)

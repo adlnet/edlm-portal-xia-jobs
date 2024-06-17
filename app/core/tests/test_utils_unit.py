@@ -1,14 +1,16 @@
 import hashlib
 import logging
+from datetime import datetime
 from unittest.mock import patch
 
 from ddt import data, ddt, unpack
 from django.test import tag
 
-from core.management.utils.xsr_client import (get_source_metadata_key_value,
+from core.management.utils.xsr_client import (convert_int_to_date,
+                                              get_source_metadata_key_value,
                                               get_xsr_api_endpoint,
                                               get_xsr_api_response,
-                                              read_source_file)
+                                              listToString, read_source_file)
 from core.models import XSRConfiguration
 
 from .test_setup import TestSetUp
@@ -51,6 +53,17 @@ class UtilsTests(TestSetUp):
 
         result_data = read_source_file()
         self.assertIsInstance(result_data, list)
+
+    def test_listToString(self):
+        converted_string = listToString('[1, 2, 3, 4]')
+
+        self.assertTrue(isinstance(converted_string, str))
+
+    def test_convert_int_to_date(self):
+
+        date_int = {'date': 1718050925}
+        convert_int_to_date('date', date_int)
+        self.assertTrue(isinstance(date_int['date'], datetime))
 
     @data(('key_field1', 'key_field2'), ('key_field11', 'key_field22'))
     @unpack
