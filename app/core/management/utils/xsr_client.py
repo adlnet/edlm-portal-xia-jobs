@@ -62,10 +62,10 @@ def custom_moodle_fields(source_data_dict):
         try:
             if "ecc approved" in source_course['categoryname'].lower():
                 source_course['courseurl'] = (xsr_api_end +
-                                              "/enrol/index.php?id="
-                                              + str(source_course['id']))
+                                              "/enrol/index.php?id=" +
+                                              str(source_course['id']))
                 source_ecc_approved_dict.append(source_course)
-        except ValueError:
+        except KeyError:
             logger.error("Source data requires a category name "
                          "field for filtering ECC approved data")
 
@@ -81,7 +81,7 @@ def custom_moodle_fields(source_data_dict):
                 value = source_course['customfields'][i]['value']
                 # setting new custom field key and value pairs to source
                 source_course[key] = value
-        except ValueError:
+        except KeyError:
             logger.warning("Source data does not contain custom fields")
 
         try:
@@ -93,14 +93,14 @@ def custom_moodle_fields(source_data_dict):
                 contacts.append(source_course['contacts'][i]['fullname'])
             contact_str = listToString(contacts)
             source_course['instructor'] = contact_str
-        except ValueError:
+        except KeyError:
             logger.warning("Source data does not contain contact fields")
 
         try:
             # setting list as string value
             enrollment_str = listToString(source_course['enrollmentmethods'])
             source_course['enrollmentmethods'] = enrollment_str
-        except ValueError:
+        except KeyError:
             logger.warning("Source data does not "
                            "contain enrollment methods fields")
 

@@ -16,6 +16,7 @@ class TestSetUp(TestCase):
         self.mock_alert = self.patcher.start()
 
         self.source_metadata = {
+            "id": 1,
             "Test": "0",
             "Test_id": "2146",
             "Test_url": "https://example.test.com/",

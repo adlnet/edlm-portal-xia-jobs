@@ -7,7 +7,8 @@ from ddt import data, ddt, unpack
 from django.test import tag
 
 from core.management.utils.xsr_client import (convert_html,
-                                              convert_int_to_date, find_dates,
+                                              convert_int_to_date,
+                                              custom_moodle_fields, find_dates,
                                               find_html,
                                               get_source_metadata_key_value,
                                               get_xsr_api_endpoint,
@@ -61,17 +62,17 @@ class UtilsTests(TestSetUp):
 
         self.assertTrue(isinstance(converted_string, str))
 
-    def test_find_dates(self):
-
-        date_int = {'date': 1718050925}
-        date_dict = find_dates(date_int)
-        self.assertTrue(isinstance(date_dict['date'], datetime))
-
     def test_find_html(self):
 
         html_dict = {'html_code': '<h1>This is heading 1</h1>'}
         converted_html_dict = find_html(html_dict)
         self.assertTrue(isinstance(converted_html_dict['html_code'], str))
+
+    def test_find_dates(self):
+
+        date_int = {'date': 1718050925}
+        date_dict = find_dates(date_int)
+        self.assertTrue(isinstance(date_dict['date'], datetime))
 
     def test_convert_html(self):
 
@@ -84,6 +85,23 @@ class UtilsTests(TestSetUp):
         date_int = {'date': 1718050925}
         convert_int_to_date('date', date_int)
         self.assertTrue(isinstance(date_int['date'], datetime))
+
+    @patch('core.management.utils.xsr_client.get_xsr_api_endpoint',
+           return_value=('xsr_url', 'token'))
+    def test_custom_moodle_fields(self, ret):
+
+        Val = custom_moodle_fields([self.source_metadata])
+        self.assertFalse(Val)
+
+    @patch('core.management.utils.xsr_client.get_xsr_api_endpoint',
+           return_value=('xsr_url', 'token'))
+    def test_custom_moodle_fields_true(self, ret):
+
+        source_dict = self.source_metadata
+        source_dict.update({"categoryname": "ecc approved"})
+
+        Val = custom_moodle_fields([source_dict])
+        self.assertTrue(Val)
 
     @data(('key_field1', 'key_field2'), ('key_field11', 'key_field22'))
     @unpack
