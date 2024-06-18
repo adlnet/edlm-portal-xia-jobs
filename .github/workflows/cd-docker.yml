@@ -67,21 +67,13 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v2
-    - name: Docker login
-      env:
-       DOCKER_USER: ${{ secrets.DOCKER_USER }}
-       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
-      run: |
-       echo "Authenticate to Docker"
-       docker login -u $DOCKER_USER -p $DOCKER_PASSWORD
-    - name: Docker build
-      run: |
-       echo "Start docker build"
-       docker build . -t openlxp/openlxp-xia-moodle
-    - name: Push Image
-      run: |
-       echo "Push new image to the Dockerhub repository"
-       docker push openlxp/openlxp-xia-moodle
+    # 
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ secrets.AWS_REGION }}
     - name: Login to Amazon ECR
       id: login-ecr
       uses: aws-actions/amazon-ecr-login@v1
