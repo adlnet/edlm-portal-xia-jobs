@@ -7,5 +7,5 @@ from .models import XSRConfiguration
 
 @admin.register(XSRConfiguration)
 class XSRConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('xsr_api_endpoint',)
-    fields = ['xsr_api_endpoint']
+    list_display = ('xsr_api_endpoint', 'token')
+    fields = ['xsr_api_endpoint', 'token']

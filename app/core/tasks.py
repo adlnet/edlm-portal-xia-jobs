@@ -1,7 +1,7 @@
 import logging
 
 from celery import shared_task
-from openlxp_notifications.management.commands.conformance_alerts import \
+from openlxp_notifications.management.commands.trigger_status_update import \
     Command as conformance_alerts_Command
 from openlxp_xia.management.commands.load_supplemental_metadata import \
     Command as load_supplemental_Command
@@ -33,12 +33,12 @@ def execute_xia_automated_workflow():
     load_supplemental_class = load_supplemental_Command()
     conformance_alerts_class = conformance_alerts_Command()
 
+    conformance_alerts_class.handle(email_references="Status_update")
     extract_class.handle()
     validate_source_class.handle()
     transform_class.handle()
     validate_target_class.handle()
     load_class.handle()
     load_supplemental_class.handle()
-    conformance_alerts_class.handle()
 
     logger.info('COMPLETED WORKFLOW')

@@ -1,14 +1,19 @@
 import hashlib
 import logging
+from datetime import datetime
 from unittest.mock import patch
 
 from ddt import data, ddt, unpack
 from django.test import tag
 
-from core.management.utils.xsr_client import (get_source_metadata_key_value,
+from core.management.utils.xsr_client import (convert_html,
+                                              convert_int_to_date,
+                                              custom_moodle_fields, find_dates,
+                                              find_html,
+                                              get_source_metadata_key_value,
                                               get_xsr_api_endpoint,
                                               get_xsr_api_response,
-                                              read_source_file)
+                                              listToString, read_source_file)
 from core.models import XSRConfiguration
 
 from .test_setup import TestSetUp
@@ -27,16 +32,18 @@ class UtilsTests(TestSetUp):
         with patch('core.management.utils.xsr_client'
                    '.XSRConfiguration.objects') as xsrCfg:
             xsrConfig = XSRConfiguration(
-                xsr_api_endpoint=self.xsr_api_endpoint_url)
+                xsr_api_endpoint=self.xsr_api_endpoint_url,
+                token=self.token)
             xsrCfg.first.return_value = xsrConfig
-            return_from_function = get_xsr_api_endpoint()
-            self.assertEqual(xsrConfig.xsr_api_endpoint, return_from_function)
+            api_end, tk = get_xsr_api_endpoint()
+            self.assertEqual(xsrConfig.xsr_api_endpoint, api_end)
+            self.assertEqual(xsrConfig.token, tk)
 
     def test_get_xsr_api_response(self):
         """Test to Function to get api response from xsr endpoint"""
         with patch('core.management.utils.xsr_client.get_xsr_api_endpoint') \
                 as xsr_ep, patch('requests.get') as response_obj:
-            xsr_ep.return_value = self.xsr_api_endpoint_url
+            xsr_ep.return_value = self.xsr_api_endpoint_url, self.token
             response_obj.return_value = response_obj
 
             result_xsr_api_response = get_xsr_api_response()
@@ -50,12 +57,58 @@ class UtilsTests(TestSetUp):
         result_data = read_source_file()
         self.assertIsInstance(result_data, list)
 
+    def test_listToString(self):
+        converted_string = listToString('[1, 2, 3, 4]')
+
+        self.assertTrue(isinstance(converted_string, str))
+
+    def test_find_html(self):
+
+        html_dict = {'html_code': '<h1>This is heading 1</h1>'}
+        converted_html_dict = find_html(html_dict)
+        self.assertTrue(isinstance(converted_html_dict['html_code'], str))
+
+    def test_find_dates(self):
+
+        date_int = {'date': 1718050925}
+        date_dict = find_dates(date_int)
+        self.assertTrue(isinstance(date_dict['date'], datetime))
+
+    def test_convert_html(self):
+
+        html_dict = {'html_code': '<h1>This is heading 1</h1>'}
+        convert_html('html_code', html_dict)
+        self.assertTrue(isinstance(html_dict['html_code'], str))
+
+    def test_convert_int_to_date(self):
+
+        date_int = {'date': 1718050925}
+        convert_int_to_date('date', date_int)
+        self.assertTrue(isinstance(date_int['date'], datetime))
+
+    @patch('core.management.utils.xsr_client.get_xsr_api_endpoint',
+           return_value=('xsr_url', 'token'))
+    def test_custom_moodle_fields(self, ret):
+
+        Val = custom_moodle_fields([self.source_metadata])
+        self.assertFalse(Val)
+
+    @patch('core.management.utils.xsr_client.get_xsr_api_endpoint',
+           return_value=('xsr_url', 'token'))
+    def test_custom_moodle_fields_true(self, ret):
+
+        source_dict = self.source_metadata
+        source_dict.update({"categoryname": "ecc approved"})
+
+        Val = custom_moodle_fields([source_dict])
+        self.assertTrue(Val)
+
     @data(('key_field1', 'key_field2'), ('key_field11', 'key_field22'))
     @unpack
     def test_get_source_metadata_key_value(self, first_value, second_value):
         """Test key dictionary creation for source"""
         test_dict = {
-            'shortname': first_value,
+            'idnumber': first_value,
             'SOURCESYSTEM': second_value
         }
 
@@ -73,7 +126,7 @@ class UtilsTests(TestSetUp):
                                                 first_value, second_value):
         """Test key dictionary creation for source"""
         test_dict = {
-            'shortname': first_value,
+            'idnumber': first_value,
             'SOURCESYSTEM': second_value
         }
 

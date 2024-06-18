@@ -1,3 +1,5 @@
+from unittest.mock import patch
+
 import pandas as pd
 from django.test import TestCase
 
@@ -10,7 +12,11 @@ class TestSetUp(TestCase):
 
         # globally accessible data sets
 
+        self.patcher = patch('core.tasks.conformance_alerts_Command')
+        self.mock_alert = self.patcher.start()
+
         self.source_metadata = {
+            "id": 1,
             "Test": "0",
             "Test_id": "2146",
             "Test_url": "https://example.test.com/",
@@ -41,7 +47,10 @@ class TestSetUp(TestCase):
         self.xis_api_endpoint_url = 'http://example'
         self.xsr_api_endpoint_url = 'http://example'
 
+        self.token = "12345"
+
         return super().setUp()
 
     def tearDown(self):
+        self.patcher.stop()
         return super().tearDown()
