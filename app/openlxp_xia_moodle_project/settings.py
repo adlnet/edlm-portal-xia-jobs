@@ -34,6 +34,8 @@ ALLOWED_HOSTS = ['*']
 # Application definition
 
 INSTALLED_APPS = [
+    "admin_interface",
+    "colorfield",
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -89,7 +91,10 @@ DATABASES = {
         'PASSWORD': os.environ.get('DB_PASSWORD'),
         'HOST': os.environ.get('DB_HOST'),
         'PORT': 3306,
-    }
+        'OPTIONS': {
+                    'charset': 'utf8mb4',
+                }
+            },
 }
 
 DEFAULT_AUTO_FIELD='django.db.models.AutoField'
@@ -112,16 +117,20 @@ MEDIA_URL = '/media/'
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        'NAME': 'django.contrib.auth.password_validation.'
+        'UserAttributeSimilarityValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        'NAME': 'django.contrib.auth.password_validation.'
+        'MinimumLengthValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.'
+        'CommonPasswordValidator',
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        'NAME': 'django.contrib.auth.password_validation.'
+        'NumericPasswordValidator',
     },
 ]
 
@@ -194,3 +203,12 @@ LOGGING = {
         }
     }
 }
+
+# Directory to store files during upload scanning
+
+if os.environ.get('TMP_SOURCE_DIR') is not None and\
+        len(os.environ.get('TMP_SOURCE_DIR')) > 0:
+    TMP_SOURCE_DIR = os.environ.get('TMP_SOURCE_DIR')
+else:
+    TMP_SOURCE_DIR = os.path.join(BASE_DIR, 'tmp', 'source')
+TMP_SOURCE_DIR = os.path.join(TMP_SOURCE_DIR, '')
