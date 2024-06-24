@@ -1,7 +1,6 @@
+from api.views import WorkflowView
 from django.urls import path
 from rest_framework.routers import DefaultRouter
-
-from api.views import WorkflowView
 
 router = DefaultRouter()
 
