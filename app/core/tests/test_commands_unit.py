@@ -2,14 +2,13 @@ import logging
 from unittest.mock import patch
 
 import pandas as pd
+from core.management.commands.extract_source_metadata import (
+    add_publisher_to_source, extract_metadata_using_key, get_source_metadata)
 from ddt import ddt
 from django.core.management import call_command
 from django.db.utils import OperationalError
 from django.test import tag
 from openlxp_xia.models import XIAConfiguration
-
-from core.management.commands.extract_source_metadata import (
-    add_publisher_to_source, extract_metadata_using_key, get_source_metadata)
 
 from .test_setup import TestSetUp
 

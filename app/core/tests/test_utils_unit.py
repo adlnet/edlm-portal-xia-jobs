@@ -3,9 +3,6 @@ import logging
 from datetime import datetime
 from unittest.mock import patch
 
-from ddt import data, ddt, unpack
-from django.test import tag
-
 from core.management.utils.xsr_client import (convert_html,
                                               convert_int_to_date,
                                               custom_moodle_fields, find_dates,
@@ -14,7 +11,8 @@ from core.management.utils.xsr_client import (convert_html,
                                               get_xsr_api_endpoint,
                                               get_xsr_api_response,
                                               listToString, read_source_file)
-from core.models import XSRConfiguration
+from ddt import data, ddt, unpack
+from django.test import tag
 
 from .test_setup import TestSetUp
 
@@ -29,15 +27,9 @@ class UtilsTests(TestSetUp):
     # Test cases for XSR_CLIENT
     def test_get_xsr_api_endpoint(self):
         """Test to check if API endpoint is present"""
-        with patch('core.management.utils.xsr_client'
-                   '.XSRConfiguration.objects') as xsrCfg:
-            xsrConfig = XSRConfiguration(
-                xsr_api_endpoint=self.xsr_api_endpoint_url,
-                token=self.token)
-            xsrCfg.first.return_value = xsrConfig
-            api_end, tk = get_xsr_api_endpoint()
-            self.assertEqual(xsrConfig.xsr_api_endpoint, api_end)
-            self.assertEqual(xsrConfig.token, tk)
+        api_end, tk = get_xsr_api_endpoint(self.xsrConfig)
+        self.assertEqual(self.xsr_api_endpoint_url, api_end)
+        self.assertEqual(self.token, tk)
 
     def test_get_xsr_api_response(self):
         """Test to Function to get api response from xsr endpoint"""
@@ -46,7 +38,7 @@ class UtilsTests(TestSetUp):
             xsr_ep.return_value = self.xsr_api_endpoint_url, self.token
             response_obj.return_value = response_obj
 
-            result_xsr_api_response = get_xsr_api_response()
+            result_xsr_api_response = get_xsr_api_response(self.xsrConfig)
             self.assertTrue(result_xsr_api_response)
 
     @patch('core.management.utils.xsr_client.extract_source',
@@ -54,7 +46,7 @@ class UtilsTests(TestSetUp):
     def test_read_source_file(self, extract):
         """test to check if data is present for extraction """
 
-        result_data = read_source_file()
+        result_data = read_source_file(self.xsrConfig)
         self.assertIsInstance(result_data, list)
 
     def test_listToString(self):
@@ -90,7 +82,7 @@ class UtilsTests(TestSetUp):
            return_value=('xsr_url', 'token'))
     def test_custom_moodle_fields(self, ret):
 
-        Val = custom_moodle_fields([self.source_metadata])
+        Val = custom_moodle_fields([self.source_metadata], self.xsrConfig)
         self.assertFalse(Val)
 
     @patch('core.management.utils.xsr_client.get_xsr_api_endpoint',
@@ -100,7 +92,7 @@ class UtilsTests(TestSetUp):
         source_dict = self.source_metadata
         source_dict.update({"categoryname": "ecc approved"})
 
-        Val = custom_moodle_fields([source_dict])
+        Val = custom_moodle_fields([source_dict], self.xsrConfig)
         self.assertTrue(Val)
 
     @data(('key_field1', 'key_field2'), ('key_field11', 'key_field22'))

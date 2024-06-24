@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 import pandas as pd
+from core.models import XSRConfiguration
 from django.test import TestCase
 
 
@@ -48,6 +49,15 @@ class TestSetUp(TestCase):
         self.xsr_api_endpoint_url = 'http://example'
 
         self.token = "12345"
+
+        self.xsrConfig = \
+            XSRConfiguration(xsr_api_endpoint=self.xsr_api_endpoint_url,
+                             token=self.token)
+        # xsrConfig2 = \
+        #     XSRConfiguration(xsr_api_endpoint="example2/api")
+
+        self.xsrConfig.save()
+        # xsrConfig2.save()
 
         return super().setUp()
 

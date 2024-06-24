@@ -10,23 +10,21 @@ from bs4 import BeautifulSoup
 from openlxp_xia.management.utils.xia_internal import (
     dict_flatten, get_key_dict, traverse_dict_with_key_list)
 
-from core.models import XSRConfiguration
 
 logger = logging.getLogger('dict_config_logger')
 
 
-def get_xsr_api_endpoint():
+def get_xsr_api_endpoint(xsr_obj):
     """Setting API endpoint from XIA and XIS communication """
     logger.debug("Retrieve xsr_api_endpoint from XSR configuration")
-    xsr_obj = XSRConfiguration.objects.first()
-
     return xsr_obj.xsr_api_endpoint, xsr_obj.token
 
 
-def get_xsr_api_response():
+def get_xsr_api_response(xsr_obj):
     """Function to get api response from xsr endpoint"""
     # url of rss feed
-    xsr_data, token = get_xsr_api_endpoint()
+
+    xsr_data, token = get_xsr_api_endpoint(xsr_obj)
 
     url = xsr_data + ("/webservice/rest/server."
                       "php?wstoken=")+token+(
@@ -52,10 +50,10 @@ def listToString(s):
     return (str1.join(s))
 
 
-def custom_moodle_fields(source_data_dict):
+def custom_moodle_fields(source_data_dict, xsr_obj):
     """Function to format data specific to moodle"""
 
-    xsr_api_end, token = get_xsr_api_endpoint()
+    xsr_api_end, token = get_xsr_api_endpoint(xsr_obj)
     source_ecc_approved_dict = []
     # filter out only ECC approved courses
     for source_course in source_data_dict:
@@ -107,16 +105,15 @@ def custom_moodle_fields(source_data_dict):
     return source_ecc_approved_dict
 
 
-def extract_source():
+def extract_source(xsr_obj):
     """function to parse xml xsr data and convert to dictionary"""
 
-    resp = get_xsr_api_response()
+    resp = get_xsr_api_response(xsr_obj)
     source_data_dict = json.loads(resp.text)
     source_data_dict = source_data_dict["courses"]
 
     # format data specific to moodle
-    source_ecc_approved_dict = custom_moodle_fields(source_data_dict)
-
+    source_ecc_approved_dict = custom_moodle_fields(source_data_dict, xsr_obj)
     logger.info("Retrieving data from source page ")
     source_df_list = [pd.DataFrame(source_ecc_approved_dict)]
     source_df_final = pd.concat(source_df_list).reset_index(drop=True)
@@ -124,11 +121,11 @@ def extract_source():
     return source_df_final
 
 
-def read_source_file():
+def read_source_file(xsr_obj):
     """sending source data in dataframe format"""
     logger.info("Retrieving data from XSR")
     # load rss from web to convert to xml
-    xsr_items = extract_source()
+    xsr_items = extract_source(xsr_obj)
     # convert xsr dictionary list to Dataframe
     source_df = pd.DataFrame(xsr_items)
     logger.info("Changing null values to None for source dataframe")

@@ -4,32 +4,36 @@ import logging
 
 import numpy as np
 import pandas as pd
+from core.management.utils.xsr_client import (find_dates, find_html,
+                                              get_source_metadata_key_value,
+                                              read_source_file)
+from core.models import XSRConfiguration
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 from openlxp_xia.management.utils.xia_internal import (
     convert_date_to_isoformat, get_publisher_detail)
 from openlxp_xia.models import MetadataLedger
 
-from core.management.utils.xsr_client import (find_dates, find_html,
-                                              get_source_metadata_key_value,
-                                              read_source_file)
-
 logger = logging.getLogger('dict_config_logger')
 
 
 def get_source_metadata():
     """Retrieving source metadata"""
-    #  Retrieve metadata from agents as a list of sources
-    df_source_list = read_source_file()
-    # Iterate through the list of sources and extract metadata
-    for source_item in df_source_list:
-        logger.info('Loading metadata to be extracted from source')
-        # Changing null values to None for source dataframe
-        std_source_df = source_item.where(pd.notnull(source_item),
-                                          None)
-        if std_source_df.empty:
-            logger.error("Source metadata is empty!")
-        extract_metadata_using_key(std_source_df)
+
+    print(XSRConfiguration.objects.all())
+
+    for xsr_obj in XSRConfiguration.objects.all():
+        #  Retrieve metadata from agents as a list of sources
+        df_source_list = read_source_file(xsr_obj)
+        # Iterate through the list of sources and extract metadata
+        for source_item in df_source_list:
+            logger.info('Loading metadata to be extracted from source')
+            # Changing null values to None for source dataframe
+            std_source_df = source_item.where(pd.notnull(source_item),
+                                              None)
+            if std_source_df.empty:
+                logger.error("Source metadata is empty!")
+            extract_metadata_using_key(std_source_df)
 
 
 def add_publisher_to_source(source_df):
