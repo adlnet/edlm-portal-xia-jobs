@@ -10,9 +10,9 @@ from core.management.utils.xsr_client import (find_dates, find_html,
 from core.models import XSRConfiguration
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from openlxp_xia.management.utils.xia_internal import (
+from core.management.utils.xia_internal import (
     convert_date_to_isoformat, get_publisher_detail)
-from openlxp_xia.models import MetadataLedger
+from core.models import MetadataLedger
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -69,6 +69,56 @@ def store_source_metadata(key_value, key_value_hash, hash_value, metadata):
         source_metadata=metadata,
         source_metadata_hash=hash_value,
         record_lifecycle_status='Active')
+
+    # data_for_transformation = MetadataLedger.objects.filter(
+    #     source_metadata_key_hash=key_value_hash,
+    #     record_lifecycle_status='Active',
+    #     source_metadata_transformation_date=None
+    # )
+
+    # if data_for_transformation.values("target_metadata_hash") != hash_value:
+    #     data_for_transformation.update(target_metadata_validation_status='')
+
+    # data_for_transformation.update(
+    #     source_metadata_transformation_date=timezone.now(),
+    #     target_metadata_key=key_value,
+    #     target_metadata_key_hash=key_value_hash,
+    #     target_metadata=metadata,
+    #     target_metadata_hash=hash_value)
+    
+
+    # # Retrieving existing records or creating new record to MetadataLedger
+    # MetadataLedger.objects.get_or_create(
+    #     target_metadata_key=key_value,
+    #     target_metadata_key_hash=key_value_hash,
+    #     target_metadata=metadata,
+    #     target_metadata_hash=hash_value,
+    #     record_lifecycle_status='Active')
+
+
+# def store_target_metadata(key_value, key_value_hash, hash_value, metadata):
+#     """Extract data from Experience Source Repository(XSR)
+#         and store in metadata ledger
+#     """
+#     # Setting record_status & deleted_date for updated record
+#     print("in store")
+#     MetadataLedger.objects.filter(
+#         target_metadata_key_hash=key_value_hash,
+#         record_lifecycle_status='Active').exclude(
+#         target_metadata_hash=hash_value).update(
+#         metadata_record_inactivation_date=timezone.now())
+#     MetadataLedger.objects.filter(
+#         target_metadata_key_hash=key_value_hash,
+#         record_lifecycle_status='Active').exclude(
+#         target_metadata_hash=hash_value).update(
+#         record_lifecycle_status='Inactive')
+#     # Retrieving existing records or creating new record to MetadataLedger
+#     MetadataLedger.objects.get_or_create(
+#         target_metadata_key=key_value,
+#         target_metadata_key_hash=key_value_hash,
+#         target_metadata=metadata,
+#         target_metadata_hash=hash_value,
+#         record_lifecycle_status='Active')
 
 
 def extract_metadata_using_key(source_df):

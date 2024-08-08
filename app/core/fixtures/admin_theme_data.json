@@ -3,9 +3,9 @@
         "model": "admin_interface.theme",
         "pk": 1,
         "fields": {
-            "name": "XIA Moodle Configuration Portal",
+            "name": "XIA edlm-jobs Configuration Portal",
             "active": true,
-            "title": "XIA Moodle Configuration Portal",
+            "title": "XIA edlm-jobs Configuration Portal",
             "title_color": "#FFFFFF",
             "title_visible": true,
             "logo": "admin-interface/logo/dodLogo_50.png",

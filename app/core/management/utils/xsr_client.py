@@ -7,34 +7,45 @@ import html2text
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from openlxp_xia.management.utils.xia_internal import (
+from core.management.utils.xia_internal import (
     dict_flatten, get_key_dict, traverse_dict_with_key_list)
+
+from requests.auth import AuthBase
 
 
 logger = logging.getLogger('dict_config_logger')
 
 
-def get_xsr_api_endpoint(xsr_obj):
+# class TokenAuth(AuthBase):
+#     """Attaches HTTP Authentication Header to the given Request object."""
+
+#     def __call__(self, r, token_name='Authorization-Key'):
+#         # modify and return the request
+
+#         r.headers[token_name] = get_P1PS_team_token()
+#         return r
+
+
+
+def get_xsr_api_endpoint(xsr_obj, page):
     """Setting API endpoint from XIA and XIS communication """
     logger.debug("Retrieve xsr_api_endpoint from XSR configuration")
-    return xsr_obj.xsr_api_endpoint, xsr_obj.token
+    xsr_endpoint = xsr_obj.xsr_api_endpoint + "?ResultsPerPage=500&page=" + str(page)
+    return xsr_endpoint, xsr_obj.token
 
 
-def get_xsr_api_response(xsr_obj):
+def get_xsr_api_response(xsr_obj, page):
     """Function to get api response from xsr endpoint"""
     # url of rss feed
 
-    xsr_data, token = get_xsr_api_endpoint(xsr_obj)
+    xsr_data, token = get_xsr_api_endpoint(xsr_obj, page)
 
-    url = xsr_data + ("/webservice/rest/server."
-                      "php?wstoken=")+token+(
-                      "&wsfunction="
-                      "core_course_get_courses_by_"
-                      "field&moodlewsrestformat=json")
+    url = xsr_data
+    headers = {"Authorization-Key": token}
 
     # creating HTTP response object from given url
     try:
-        resp = requests.get(url, verify=False)
+        resp = requests.get(url, verify=False, headers=headers)
     except requests.exceptions.RequestException as e:
         logger.error(e)
         raise SystemExit('Exiting! Can not make connection with XSR.')
@@ -49,76 +60,51 @@ def listToString(s):
     # return string
     return (str1.join(s))
 
+def custom_Jobs_edits(source_data):
+    """Function to perform custom edits to USA jobs data"""
+    for data in source_data:
+        for key in data["MatchedObjectDescriptor"]:
+            if isinstance(data["MatchedObjectDescriptor"][key], list):
+                data_list = []
+                for each_instance in data["MatchedObjectDescriptor"][key]:
+                    if isinstance(each_instance, dict):
+                        value = json.dumps(each_instance)
+                        data_list.append(value)
+                data["MatchedObjectDescriptor"][key] = data_list
 
-def custom_moodle_fields(source_data_dict, xsr_obj):
-    """Function to format data specific to moodle"""
+                data["MatchedObjectDescriptor"][key]=listToString(data["MatchedObjectDescriptor"][key])
 
-    xsr_api_end, token = get_xsr_api_endpoint(xsr_obj)
-    source_ecc_approved_dict = []
-    # filter out only ECC approved courses
-    for source_course in source_data_dict:
-        try:
-            if "ecc approved" in source_course['categoryname'].lower():
-                source_course['courseurl'] = (xsr_api_end +
-                                              "/enrol/index.php?id=" +
-                                              str(source_course['id']))
-                source_ecc_approved_dict.append(source_course)
-        except KeyError:
-            logger.error("Source data requires a category name "
-                         "field for filtering ECC approved data")
-
-    for source_course in source_ecc_approved_dict:
-        contacts = []
-        try:
-            # getting length of list
-            length_custom_fields = len(source_course['customfields'])
-            # Iterating the index
-            # Iterating through custom fields
-            for i in range(length_custom_fields):
-                key = source_course['customfields'][i]['shortname']
-                value = source_course['customfields'][i]['value']
-                # setting new custom field key and value pairs to source
-                source_course[key] = value
-        except KeyError:
-            logger.warning("Source data does not contain custom fields")
-
-        try:
-            # getting length of list
-            length_contacts = len(source_course['contacts'])
-            # Iterating the index
-            # Iterating through contacts
-            for i in range(length_contacts):
-                contacts.append(source_course['contacts'][i]['fullname'])
-            contact_str = listToString(contacts)
-            source_course['instructor'] = contact_str
-        except KeyError:
-            logger.warning("Source data does not contain contact fields")
-
-        try:
-            # setting list as string value
-            enrollment_str = listToString(source_course['enrollmentmethods'])
-            source_course['enrollmentmethods'] = enrollment_str
-        except KeyError:
-            logger.warning("Source data does not "
-                           "contain enrollment methods fields")
-
-    return source_ecc_approved_dict
 
 
 def extract_source(xsr_obj):
     """function to parse xml xsr data and convert to dictionary"""
 
-    resp = get_xsr_api_response(xsr_obj)
-    source_data_dict = json.loads(resp.text)
-    source_data_dict = source_data_dict["courses"]
+    page = 1
 
-    # format data specific to moodle
-    source_ecc_approved_dict = custom_moodle_fields(source_data_dict, xsr_obj)
-    logger.info("Retrieving data from source page ")
-    source_df_list = [pd.DataFrame(source_ecc_approved_dict)]
-    source_df_final = pd.concat(source_df_list).reset_index(drop=True)
-    logger.info("Completed retrieving data from source")
-    return source_df_final
+    resp = get_xsr_api_response(xsr_obj, page)
+    source_data_dict = json.loads(resp.text)
+    source_df_list = []
+
+    while True:
+        logger.info("Retrieving data from source page " + str(page))
+
+        source_data = source_data_dict["SearchResult"]["SearchResultItems"]
+        # custom_Jobs_edits(source_data)
+        source_df = pd.DataFrame(source_data)
+
+        # format data specific to moodle
+        # source_ecc_approved_dict = custom_moodle_fields(source_data_dict, xsr_obj)
+        logger.info("Retrieving data from source page " + str(page))
+        # source_df_list = [pd.DataFrame(source_data_dict)]
+        source_df_list.append(source_df)
+        page = page + 1
+        if source_data_dict["SearchResult"]["SearchResultCount"]==0:
+            source_df_final = pd.concat(source_df_list).reset_index(drop=True)
+            logger.info("Completed retrieving data from source")
+            return source_df_final
+        else:
+            resp = get_xsr_api_response(xsr_obj, page)
+            source_data_dict = json.loads(resp.text)
 
 
 def read_source_file(xsr_obj):
@@ -137,15 +123,17 @@ def read_source_file(xsr_obj):
 def get_source_metadata_key_value(data_dict):
     """Function to create key value for source metadata """
     # field names depend on source data and SOURCESYSTEM is system generated
-    field = ['idnumber', 'SOURCESYSTEM']
+    field = ['MatchedObjectDescriptor.PositionID', 'SOURCESYSTEM']
     field_values = []
 
+    data_flattened = dict_flatten(data_dict, [])
+
     for item in field:
-        if not data_dict.get(item):
+        if not data_flattened.get(item):
             logger.error('Field name ' + item + ' is missing for '
                                                 'key creation')
             return None
-        field_values.append(data_dict.get(item))
+        field_values.append(data_flattened.get(item))
 
     # Key value creation for source metadata
     key_value = '_'.join(field_values)
