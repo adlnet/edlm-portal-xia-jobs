@@ -7,11 +7,11 @@ import html2text
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-from core.management.utils.xia_internal import (
-    dict_flatten, get_key_dict, traverse_dict_with_key_list)
 
-from requests.auth import AuthBase
-
+from core.management.utils.eccr_client import get_eccr_UUID
+from core.management.utils.xia_internal import (dict_flatten, get_key_dict,
+                                                traverse_dict_with_key_list)
+from core.serializers import MetadataLedgerSerializer
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -26,19 +26,18 @@ logger = logging.getLogger('dict_config_logger')
 #         return r
 
 
-
-def get_xsr_api_endpoint(xsr_obj, page):
+def get_xsr_api_endpoint(xsr_obj, page, endpoint):
     """Setting API endpoint from XIA and XIS communication """
     logger.debug("Retrieve xsr_api_endpoint from XSR configuration")
-    xsr_endpoint = xsr_obj.xsr_api_endpoint + "?ResultsPerPage=500&page=" + str(page)
+    xsr_endpoint = xsr_obj.xsr_api_endpoint + endpoint
     return xsr_endpoint, xsr_obj.token
 
 
-def get_xsr_api_response(xsr_obj, page):
+def get_xsr_api_response(xsr_obj, page, endpoint):
     """Function to get api response from xsr endpoint"""
     # url of rss feed
 
-    xsr_data, token = get_xsr_api_endpoint(xsr_obj, page)
+    xsr_data, token = get_xsr_api_endpoint(xsr_obj, page, endpoint)
 
     url = xsr_data
     headers = {"Authorization-Key": token}
@@ -60,6 +59,7 @@ def listToString(s):
     # return string
     return (str1.join(s))
 
+
 def custom_Jobs_edits(source_data):
     """Function to perform custom edits to USA jobs data"""
     for data in source_data:
@@ -71,9 +71,8 @@ def custom_Jobs_edits(source_data):
                         value = json.dumps(each_instance)
                         data_list.append(value)
                 data["MatchedObjectDescriptor"][key] = data_list
-
-                data["MatchedObjectDescriptor"][key]=listToString(data["MatchedObjectDescriptor"][key])
-
+                data["MatchedObjectDescriptor"][key] =\
+                    listToString(data["MatchedObjectDescriptor"][key])
 
 
 def extract_source(xsr_obj):
@@ -81,30 +80,48 @@ def extract_source(xsr_obj):
 
     page = 1
 
-    resp = get_xsr_api_response(xsr_obj, page)
-    source_data_dict = json.loads(resp.text)
+    resp = get_xsr_api_response(xsr_obj, page, "/api/codelist/cyberworkroles")
+
+    cwr_dict = json.loads(resp.text)
+
+    cwr_code = cwr_dict["CodeList"][0]["ValidValue"]
+    cwr_list = []
+
+    for data in cwr_code:
+        cwr_list.append(data["Code"])
+    
+    cwr_len = len(cwr_list)
     source_df_list = []
 
-    while True:
-        logger.info("Retrieving data from source page " + str(page))
+    for code in cwr_list:
+        endpoint = '/api/Search?cwr=' + code
+        resp_code = get_xsr_api_response(xsr_obj, page, endpoint)
+        
 
-        source_data = source_data_dict["SearchResult"]["SearchResultItems"]
-        # custom_Jobs_edits(source_data)
-        source_df = pd.DataFrame(source_data)
+        if resp.status_code == 200:
+            source_data_dict =json.loads(resp_code.text)
+        
+            logger.info("Retrieving data from source page " + str(page))
 
-        # format data specific to moodle
-        # source_ecc_approved_dict = custom_moodle_fields(source_data_dict, xsr_obj)
-        logger.info("Retrieving data from source page " + str(page))
-        # source_df_list = [pd.DataFrame(source_data_dict)]
-        source_df_list.append(source_df)
-        page = page + 1
-        if source_data_dict["SearchResult"]["SearchResultCount"]==0:
-            source_df_final = pd.concat(source_df_list).reset_index(drop=True)
-            logger.info("Completed retrieving data from source")
-            return source_df_final
-        else:
-            resp = get_xsr_api_response(xsr_obj, page)
-            source_data_dict = json.loads(resp.text)
+            source_data = source_data_dict["SearchResult"]["SearchResultItems"]
+
+            source_df = pd.DataFrame(source_data)
+
+            eccr_uuid = get_eccr_UUID(code)
+            source_df["code"] = code
+            if eccr_uuid:
+                source_df["eccr_uuid"] = str(eccr_uuid)
+            else:
+                source_df["eccr_uuid"] = eccr_uuid
+
+            logger.info("Retrieving data from source page " + str(page))
+            source_df_list.append(source_df)
+
+            if page>=cwr_len:
+                source_df_final = pd.concat(source_df_list).reset_index(drop=True)
+                logger.info("Completed retrieving data from source")
+                return source_df_final
+            page = page + 1
 
 
 def read_source_file(xsr_obj):
@@ -123,7 +140,7 @@ def read_source_file(xsr_obj):
 def get_source_metadata_key_value(data_dict):
     """Function to create key value for source metadata """
     # field names depend on source data and SOURCESYSTEM is system generated
-    field = ['MatchedObjectDescriptor.PositionID', 'SOURCESYSTEM']
+    field = ['MatchedObjectDescriptor.PositionID', 'code', 'SOURCESYSTEM']
     field_values = []
 
     data_flattened = dict_flatten(data_dict, [])

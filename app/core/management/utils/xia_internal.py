@@ -78,6 +78,7 @@ def get_target_metadata_key_value(data_dict):
     field = {
         "Job_Vacancy_Data": [
             "JobPostingID",
+            "code",
             "ProviderName"
         ]
     }

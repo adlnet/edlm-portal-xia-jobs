@@ -3,12 +3,12 @@ import logging
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from core.management.utils.xia_internal import (
-    dict_flatten, is_date, required_recommended_logs)
+from core.management.utils.xia_internal import (dict_flatten, is_date,
+                                                required_recommended_logs)
 from core.management.utils.xss_client import (
     get_data_types_for_validation, get_required_fields_for_validation,
     get_target_validation_schema)
-from core.models import MetadataLedger, SupplementalLedger
+from core.models import MetadataLedger
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -42,17 +42,6 @@ def update_previous_instance_in_metadata(key_value_hash):
         exclude(target_metadata_validation_date=None).update(
         record_lifecycle_status='Inactive')
 
-    SupplementalLedger.objects.filter(
-        supplemental_metadata_key_hash=key_value_hash,
-        record_lifecycle_status='Active'). \
-        exclude(supplemental_metadata_validation_date=None).update(
-        metadata_record_inactivation_date=timezone.now())
-    SupplementalLedger.objects.filter(
-        supplemental_metadata_key_hash=key_value_hash,
-        record_lifecycle_status='Active'). \
-        exclude(supplemental_metadata_validation_date=None).update(
-        record_lifecycle_status='Inactive')
-
 
 def store_target_metadata_validation_status(target_data_dict, key_value_hash,
                                             validation_result,
@@ -76,12 +65,6 @@ def store_target_metadata_validation_status(target_data_dict, key_value_hash,
             target_metadata_validation_date=timezone.now(),
             record_lifecycle_status=record_status_result,
             metadata_record_inactivation_date=timezone.now())
-
-    SupplementalLedger.objects.filter(
-        supplemental_metadata_key_hash=key_value_hash,
-        record_lifecycle_status="Active").update(
-        supplemental_metadata_validation_date=timezone.now(),
-        record_lifecycle_status=record_status_result)
 
 
 def validate_target_using_key(target_data_dict, required_column_list,

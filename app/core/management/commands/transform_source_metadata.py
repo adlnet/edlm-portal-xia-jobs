@@ -5,16 +5,16 @@ import pandas as pd
 from django.core.management.base import BaseCommand
 from django.utils import timezone
 
-from core.management.utils.xia_internal import (
-    dict_flatten, get_target_metadata_key_value, is_date,
-    replace_field_on_target_schema, required_recommended_logs,
-    type_cast_overwritten_values)
+from core.management.utils.xia_internal import (dict_flatten,
+                                                get_target_metadata_key_value,
+                                                is_date,
+                                                required_recommended_logs,
+                                                type_cast_overwritten_values)
 from core.management.utils.xss_client import (
     get_data_types_for_validation, get_required_fields_for_validation,
     get_source_validation_schema, get_target_metadata_for_transformation,
     get_target_validation_schema)
-from core.models import (MetadataFieldOverwrite, MetadataLedger,
-                                SupplementalLedger)
+from core.models import MetadataFieldOverwrite, MetadataLedger
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -31,15 +31,6 @@ def get_source_metadata_for_transformation():
         source_metadata_validation_date=None)
 
     return source_data_dict
-
-
-def create_supplemental_metadata(metadata_columns, supplemental_metadata):
-    """Function to identify supplemental metadata store them"""
-
-    for metadata_column_list in metadata_columns:
-        for column in metadata_column_list:
-            supplemental_metadata.pop(column, None)
-    return supplemental_metadata
 
 
 def get_metadata_fields_to_overwrite(metadata_df):
@@ -117,13 +108,14 @@ def create_target_metadata_dict(ind, target_mapping_dict, source_metadata,
     """Function to replace and transform source data to target data for
     using target mapping schema"""
 
+    # Flatten source data dictionary for replacing and transformation
+    source_metadata = dict_flatten(source_metadata, required_column_list)
+
     # Create dataframe using target metadata schema
     target_schema = pd.DataFrame.from_dict(
         target_mapping_dict,
         orient='index')
-
-    # Flatten source data dictionary for replacing and transformation
-    source_metadata = dict_flatten(source_metadata, required_column_list)
+    mapping_list = list(target_schema.iloc[0])
 
     # Updating null values with empty strings for replacing metadata
     source_metadata = {
@@ -131,14 +123,13 @@ def create_target_metadata_dict(ind, target_mapping_dict, source_metadata,
         source_metadata.items()}
 
     # replacing fields to be overwritten or appended
-    # print(source_metadata)
-    # metadata_df = pd.DataFrame(source_metadata, index=[0])
-    # metadata = overwrite_metadata_field(metadata_df)
-    metadata = source_metadata
+    metadata_df = pd.DataFrame(source_metadata, index=[0])
+    metadata = overwrite_metadata_field(metadata_df)
 
     # Replacing metadata schema with mapped values from source metadata
 
-    target_schema_replaced = target_schema.replace(metadata)
+    target_schema_mapped = target_schema.replace(metadata)
+    target_schema_replaced = target_schema_mapped.replace(mapping_list, '')
 
     # Dropping index value and creating json object
     target_data = target_schema_replaced.apply(lambda x: [x.dropna()],
@@ -154,25 +145,13 @@ def create_target_metadata_dict(ind, target_mapping_dict, source_metadata,
     target_data_dict = type_checking_target_metadata(ind, target_data_dict,
                                                      expected_data_types)
 
-    # send values to be skipped while creating supplemental data
-
-    supplemental_metadata = \
-        create_supplemental_metadata(target_schema.values.tolist(), metadata)
-
-    return target_data_dict, supplemental_metadata
+    return target_data_dict
 
 
 def store_transformed_source_metadata(key_value, key_value_hash,
                                       target_data_dict,
-                                      hash_value, supplemental_metadata):
+                                      hash_value):
     """Storing target metadata in MetadataLedger"""
-
-    source_extraction_date = MetadataLedger.objects.values_list(
-        "source_metadata_extraction_date", flat=True).get(
-        source_metadata_key_hash=key_value_hash,
-        record_lifecycle_status='Active',
-        source_metadata_transformation_date=None
-    )
 
     data_for_transformation = MetadataLedger.objects.filter(
         source_metadata_key_hash=key_value_hash,
@@ -190,27 +169,6 @@ def store_transformed_source_metadata(key_value, key_value_hash,
         target_metadata=target_data_dict,
         target_metadata_hash=hash_value)
 
-    supplemental_hash_value = hashlib.sha512(
-        str(supplemental_metadata).encode(
-            'utf-8')).hexdigest()
-
-    # check if metadata has corresponding supplemental values and store
-    if supplemental_metadata:
-        SupplementalLedger.objects.get_or_create(
-            supplemental_metadata_hash=supplemental_hash_value,
-            supplemental_metadata_key=key_value,
-            supplemental_metadata_key_hash=key_value_hash,
-            supplemental_metadata=supplemental_metadata,
-            record_lifecycle_status='Active')
-
-        SupplementalLedger.objects.filter(
-            supplemental_metadata_hash=supplemental_hash_value,
-            supplemental_metadata_key=key_value,
-            supplemental_metadata_key_hash=key_value_hash,
-            record_lifecycle_status='Active').update(
-            supplemental_metadata_extraction_date=source_extraction_date,
-            supplemental_metadata_transformation_date=timezone.now())
-
 
 def transform_source_using_key(source_data_dict, target_mapping_dict,
                                required_column_list, expected_data_types):
@@ -218,13 +176,12 @@ def transform_source_using_key(source_data_dict, target_mapping_dict,
     logger.info(
         "Transforming source data using target renaming and mapping "
         "schemas and storing in json format ")
-    logger.info("Identifying supplemental data and storing them ")
     len_source_metadata = len(source_data_dict)
     logger.info(
         "Overwrite & append metadata fields with admin entered values")
     for ind in range(len_source_metadata):
         for table_column_name in source_data_dict[ind]:
-            target_data_dict, supplemental_metadata = \
+            target_data_dict = \
                 create_target_metadata_dict(ind, target_mapping_dict,
                                             source_data_dict
                                             [ind]
@@ -234,9 +191,6 @@ def transform_source_using_key(source_data_dict, target_mapping_dict,
                                             )
             # Looping through target values in dictionary
             for ind1 in target_data_dict:
-                # Replacing values in field referring target schema
-                # replace_field_on_target_schema(ind1,
-                #                                target_data_dict)
                 # Key creation for target metadata
                 key = get_target_metadata_key_value(target_data_dict[ind1])
 
@@ -248,8 +202,7 @@ def transform_source_using_key(source_data_dict, target_mapping_dict,
                                                       'key_value_hash'],
                                                   target_data_dict[
                                                       ind1],
-                                                  hash_value,
-                                                  supplemental_metadata)
+                                                  hash_value)
 
 
 class Command(BaseCommand):

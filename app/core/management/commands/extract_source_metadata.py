@@ -4,23 +4,21 @@ import logging
 
 import numpy as np
 import pandas as pd
+from django.core.management.base import BaseCommand
+from django.utils import timezone
+
+from core.management.utils.xia_internal import (convert_date_to_isoformat,
+                                                get_publisher_detail)
 from core.management.utils.xsr_client import (find_dates, find_html,
                                               get_source_metadata_key_value,
                                               read_source_file)
-from core.models import XSRConfiguration
-from django.core.management.base import BaseCommand
-from django.utils import timezone
-from core.management.utils.xia_internal import (
-    convert_date_to_isoformat, get_publisher_detail)
-from core.models import MetadataLedger
+from core.models import MetadataLedger, XSRConfiguration
 
 logger = logging.getLogger('dict_config_logger')
 
 
 def get_source_metadata():
     """Retrieving source metadata"""
-
-    print(XSRConfiguration.objects.all())
 
     for xsr_obj in XSRConfiguration.objects.all():
         #  Retrieve metadata from agents as a list of sources
@@ -68,57 +66,9 @@ def store_source_metadata(key_value, key_value_hash, hash_value, metadata):
         source_metadata_key_hash=key_value_hash,
         source_metadata=metadata,
         source_metadata_hash=hash_value,
-        record_lifecycle_status='Active')
-
-    # data_for_transformation = MetadataLedger.objects.filter(
-    #     source_metadata_key_hash=key_value_hash,
-    #     record_lifecycle_status='Active',
-    #     source_metadata_transformation_date=None
-    # )
-
-    # if data_for_transformation.values("target_metadata_hash") != hash_value:
-    #     data_for_transformation.update(target_metadata_validation_status='')
-
-    # data_for_transformation.update(
-    #     source_metadata_transformation_date=timezone.now(),
-    #     target_metadata_key=key_value,
-    #     target_metadata_key_hash=key_value_hash,
-    #     target_metadata=metadata,
-    #     target_metadata_hash=hash_value)
-    
-
-    # # Retrieving existing records or creating new record to MetadataLedger
-    # MetadataLedger.objects.get_or_create(
-    #     target_metadata_key=key_value,
-    #     target_metadata_key_hash=key_value_hash,
-    #     target_metadata=metadata,
-    #     target_metadata_hash=hash_value,
-    #     record_lifecycle_status='Active')
-
-
-# def store_target_metadata(key_value, key_value_hash, hash_value, metadata):
-#     """Extract data from Experience Source Repository(XSR)
-#         and store in metadata ledger
-#     """
-#     # Setting record_status & deleted_date for updated record
-#     print("in store")
-#     MetadataLedger.objects.filter(
-#         target_metadata_key_hash=key_value_hash,
-#         record_lifecycle_status='Active').exclude(
-#         target_metadata_hash=hash_value).update(
-#         metadata_record_inactivation_date=timezone.now())
-#     MetadataLedger.objects.filter(
-#         target_metadata_key_hash=key_value_hash,
-#         record_lifecycle_status='Active').exclude(
-#         target_metadata_hash=hash_value).update(
-#         record_lifecycle_status='Inactive')
-#     # Retrieving existing records or creating new record to MetadataLedger
-#     MetadataLedger.objects.get_or_create(
-#         target_metadata_key=key_value,
-#         target_metadata_key_hash=key_value_hash,
-#         target_metadata=metadata,
-#         target_metadata_hash=hash_value,
-#         record_lifecycle_status='Active')
+        record_lifecycle_status='Active',
+        code=metadata["code"],
+        eccr_uuid=metadata['eccr_uuid'])
 
 
 def extract_metadata_using_key(source_df):

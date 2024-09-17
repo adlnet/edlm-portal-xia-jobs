@@ -2,14 +2,15 @@ import logging
 import uuid
 
 import requests
+from django.core.validators import RegexValidator
 from django.db import models
 from django.forms import ValidationError
-from django.core.validators import RegexValidator
 from django.urls import reverse
 from django.utils import timezone
-from core.management.utils.model_help import confusable_homoglyphs_check
-from core.management.utils.model_help import bleach_data_to_json
 from model_utils.models import TimeStampedModel
+
+from core.management.utils.model_help import (bleach_data_to_json,
+                                              confusable_homoglyphs_check)
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -35,6 +36,22 @@ class XSRConfiguration(models.Model):
         help_text='Enter the XSR Token',
         max_length=200
     )
+
+
+class ECCRConfiguration(models.Model):
+    """Model for XSR Configuration """
+
+    eccr_api_endpoint = models.CharField(
+        help_text='Enter the ECCR API endpoint',
+        max_length=200
+    )
+
+    def save(self, *args, **kwargs):
+        if not self.pk and ECCRConfiguration.objects.exists():
+            raise ValidationError('There can be only one ECCRConfiguration '
+                                  'instance')
+        return super(ECCRConfiguration, self).save(*args, **kwargs)
+
 
 class XIAConfiguration(TimeStampedModel):
     """Model for XIA Configuration """
@@ -136,11 +153,6 @@ class XISConfiguration(TimeStampedModel):
         max_length=200
     )
 
-    xis_supplemental_api_endpoint = models.CharField(
-        help_text='Enter the XIS Supplemental Ledger API endpoint',
-        max_length=200
-    )
-
     xis_api_key = models.CharField(
         help_text="Enter the XIS API Key",
         max_length=128
@@ -198,68 +210,20 @@ class MetadataLedger(TimeStampedModel):
                                                            null=True)
     target_metadata_validation_status = models.CharField(
         max_length=10, blank=True, choices=METADATA_VALIDATION_CHOICES)
+    eccr_uuid = models.TextField(blank=True, null=True)
+    code = models.CharField(max_length=200, blank=True, null=True)
 
     def save(self, *args, **kwargs):
         source_data = self.source_metadata
-        # Checking for confusable hologlyphs 
+        # Checking for confusable hologlyphs
         data_checked = confusable_homoglyphs_check(source_data)
         if not data_checked:
             # If data check failed setting metadata to inactive
             self.record_lifecycle_status = "Inactive"
-            self.metadata_record_inactivation_date=timezone.now()
-        # cleaning metadata using bleach 
+            self.metadata_record_inactivation_date = timezone.now()
+        # cleaning metadata using bleach
         self.source_metadata = bleach_data_to_json(source_data)
         return super(MetadataLedger, self).save(*args, **kwargs)
-
-
-class SupplementalLedger(TimeStampedModel):
-    """Model for Supplemental Metadata """
-
-    RECORD_ACTIVATION_STATUS_CHOICES = [('Active', 'A'), ('Inactive', 'I')]
-    RECORD_TRANSMISSION_STATUS_CHOICES = [('Successful', 'S'), ('Failed', 'F'),
-                                          ('Pending', 'P'), ('Ready', 'R')]
-
-    metadata_record_inactivation_date = models.DateTimeField(blank=True,
-                                                             null=True)
-    metadata_record_uuid = models.UUIDField(primary_key=True,
-                                            default=uuid.uuid4, editable=False)
-    record_lifecycle_status = models.CharField(
-        max_length=10, blank=True, choices=RECORD_ACTIVATION_STATUS_CHOICES)
-    supplemental_metadata = models.JSONField(blank=True,
-                                             validators=[RegexValidator
-                                                         (regex=rcheck,
-                                                          message="The"
-                                                                  " Wrong "
-                                                                  "Format "
-                                                                  "Entered")])
-    supplemental_metadata_extraction_date = models.DateTimeField(
-        auto_now_add=True)
-    supplemental_metadata_hash = models.CharField(max_length=200)
-    supplemental_metadata_key = models.TextField()
-    supplemental_metadata_key_hash = models.CharField(max_length=200)
-    supplemental_metadata_transformation_date = models.DateTimeField(
-        blank=True, null=True)
-    supplemental_metadata_validation_date = models.DateTimeField(
-        blank=True, null=True)
-    supplemental_metadata_transmission_date = models.DateTimeField(
-        blank=True, null=True)
-    supplemental_metadata_transmission_status = models.CharField(
-        max_length=10, blank=True, default='Ready',
-        choices=RECORD_TRANSMISSION_STATUS_CHOICES)
-    supplemental_metadata_transmission_status_code = models.IntegerField(
-        blank=True, null=True)
-
-    def save(self, *args, **kwargs):
-        source_data = self.supplemental_metadata
-        # Checking for confusable hologlyphs 
-        data_checked = confusable_homoglyphs_check(source_data)
-        if not data_checked:
-            # If data check failed setting metadata to inactive
-            self.record_lifecycle_status = "Inactive"
-            self.metadata_record_inactivation_date=timezone.now()
-        # cleaning metadata using bleach 
-        self.source_metadata = bleach_data_to_json(source_data)
-        return super(SupplementalLedger, self).save(*args, **kwargs)
 
 
 class MetadataFieldOverwrite(TimeStampedModel):

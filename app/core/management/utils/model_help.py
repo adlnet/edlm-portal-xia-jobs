@@ -1,6 +1,7 @@
 import html
-import bleach
 import logging
+
+import bleach
 from confusable_homoglyphs import categories, confusables
 
 logger = logging.getLogger('dict_config_logger')

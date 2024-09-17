@@ -1,7 +1,7 @@
 from django.contrib import admin
 
-from .models import XSRConfiguration, MetadataFieldOverwrite, XIAConfiguration, XISConfiguration
-
+from .models import (ECCRConfiguration, MetadataFieldOverwrite,
+                     XIAConfiguration, XISConfiguration, XSRConfiguration)
 
 # Register your models here.
 
@@ -10,6 +10,12 @@ from .models import XSRConfiguration, MetadataFieldOverwrite, XIAConfiguration, 
 class XSRConfigurationAdmin(admin.ModelAdmin):
     list_display = ('xsr_api_endpoint', 'token')
     fields = ['xsr_api_endpoint', 'token']
+
+
+@admin.register(ECCRConfiguration)
+class ECCRConfigurationAdmin(admin.ModelAdmin):
+    list_display = ('eccr_api_endpoint',)
+    fields = ['eccr_api_endpoint']
 
 
 def marked_default(MetadataFieldOverwriteAdmin, request, queryset):
@@ -46,10 +52,9 @@ class XIAConfigurationAdmin(admin.ModelAdmin):
 
 @admin.register(XISConfiguration)
 class XISConfigurationAdmin(admin.ModelAdmin):
-    list_display = ('xis_metadata_api_endpoint',
-                    'xis_supplemental_api_endpoint',)
+    list_display = ('xis_metadata_api_endpoint',)
     fields = ['xis_metadata_api_endpoint',
-              'xis_supplemental_api_endpoint', 'xis_api_key']
+              'xis_api_key']
 
 
 @admin.register(MetadataFieldOverwrite)
@@ -63,4 +68,3 @@ class MetadataFieldOverwriteAdmin(admin.ModelAdmin):
               'field_value',
               'overwrite']
     actions = [marked_default, unmarked_default]
-
