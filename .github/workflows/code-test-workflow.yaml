@@ -44,6 +44,7 @@ jobs:
         echo DJANGO_SUPERUSER_PASSWORD={{ secrets.DJANGO_SUPERUSER_PASSWORD }} >> .env
         echo DJANGO_SUPERUSER_USERNAME={{ secrets.DJANGO_SUPERUSER_USERNAME }} >> .env
         echo LOG_PATH={{ secrets.LOG_PATH}} >> .env
+        echo SECRET_KEY_VAL={{ secrets.SECRET_KEY_VAL}} >> .env
 
     #Start running test scripts and generate the coverage report
     - name: Unit Tests/Code Coverage
