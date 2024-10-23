@@ -31,18 +31,12 @@ jobs:
     - name: Create .env file
       run: |
         echo "AWS_ACCESS_KEY_ID={{ secrets.AWS_ACCESS_KEY_ID }}" >> .env
-        
+
     #Start running test scripts and generate the coverage report
-    - name: Generate Coverage Report
+    - name: Unit Tests/Code Coverage
       env:
         GITHUB_TOKEN: ${{ secrets.ACCESS_TOKEN }}
       run: |
-        echo "Cloning private repository"
-        git clone https://openlxp-host:${{ secrets.ACCESS_TOKEN }}@github.com/OpenLXP/openlxp-private.git
-        echo "Private repository cloned successfully"
-        echo "Copying .env file from openlxp-private to current working directory"
-        cp ./openlxp-private/openlxp-xia-moodle-env/.env .
-        echo "Copied .env file successfully"
         echo "Create openlxp docker network"
         docker network create openlxp
         echo "Docker network successfully created"
