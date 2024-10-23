@@ -1,6 +1,9 @@
 name: EDLM XIA Jobs Code CI/CD
 
 on:
+  push:
+    branches:
+      - setup
   pull_request:
     branches: 
       - main
