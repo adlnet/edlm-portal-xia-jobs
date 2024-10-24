@@ -89,18 +89,17 @@ def extract_source(xsr_obj):
 
     for data in cwr_code:
         cwr_list.append(data["Code"])
-    
+
     cwr_len = len(cwr_list)
     source_df_list = []
 
     for code in cwr_list:
         endpoint = '/api/Search?cwr=' + code
         resp_code = get_xsr_api_response(xsr_obj, page, endpoint)
-        
 
         if resp.status_code == 200:
             source_data_dict =json.loads(resp_code.text)
-        
+
             logger.info("Retrieving data from source page " + str(page))
 
             source_data = source_data_dict["SearchResult"]["SearchResultItems"]
@@ -121,7 +120,7 @@ def extract_source(xsr_obj):
                 source_df_final = pd.concat(source_df_list).reset_index(drop=True)
                 logger.info("Completed retrieving data from source")
                 return source_df_final
-            page = page + 1
+            page = page + 1 
 
 
 def read_source_file(xsr_obj):

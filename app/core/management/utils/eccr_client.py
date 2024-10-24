@@ -33,7 +33,7 @@ def get_eccr_UUID(code):
 
     payload = {'data': cwr_code,
                'searchParams': '{"start":0,"size":20}'}
-    
+
     files=[
 
     ]
@@ -42,11 +42,11 @@ def get_eccr_UUID(code):
     response = requests.request("POST", url, headers=headers, data=payload, files=files)
 
     job_resp = {'job': {
-                            'reference': "",
-                            'job_type': "",
-                            'name': ""
-                            }
+                        'reference': "",
+                        'job_type': "",
+                        'name': ""
                     }
+                }
 
     if not response.json():
         return None
@@ -57,7 +57,7 @@ def get_eccr_UUID(code):
         if response.json()[0]['@type']:
 
             job_resp['job']['job_type'] = response.json()[0]['@type']
-                         
+            
         if response.json()[0]['name']['@value']:
 
             job_resp['job']['name'] = response.json()[0]['name']['@value']
@@ -65,4 +65,3 @@ def get_eccr_UUID(code):
         return job_resp
     else:
         return None
-
