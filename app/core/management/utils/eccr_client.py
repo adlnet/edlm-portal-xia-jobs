@@ -29,17 +29,18 @@ def get_eccr_UUID(code):
 
     url = get_eccr_api_endpoint() + "/api/sky/repo/search"
 
-    cwr_code ='(markings:' + code + ')'
+    cwr_code = '(markings:' + code + ')'
 
     payload = {'data': cwr_code,
                'searchParams': '{"start":0,"size":20}'}
 
-    files=[
+    files = [
 
     ]
     headers = {}
 
-    response = requests.request("POST", url, headers=headers, data=payload, files=files)
+    response = requests.request("POST", url, headers=headers, data=payload, 
+                                files=files)
 
     job_resp = {'job': {
                         'reference': "",

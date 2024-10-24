@@ -98,7 +98,7 @@ def extract_source(xsr_obj):
         resp_code = get_xsr_api_response(xsr_obj, page, endpoint)
 
         if resp.status_code == 200:
-            source_data_dict =json.loads(resp_code.text)
+            source_data_dict = json.loads(resp_code.text)
 
             logger.info("Retrieving data from source page " + str(page))
 
@@ -116,11 +116,12 @@ def extract_source(xsr_obj):
             logger.info("Retrieving data from source page " + str(page))
             source_df_list.append(source_df)
 
-            if page>=cwr_len:
-                source_df_final = pd.concat(source_df_list).reset_index(drop=True)
+            if page >= cwr_len:
+                source_df_final = pd.concat(source_df_list).reset_index(
+                    drop=True)
                 logger.info("Completed retrieving data from source")
                 return source_df_final
-            page = page + 1 
+            page = page + 1
 
 
 def read_source_file(xsr_obj):
