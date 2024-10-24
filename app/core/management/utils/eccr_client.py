@@ -39,7 +39,7 @@ def get_eccr_UUID(code):
     ]
     headers = {}
 
-    response = requests.request("POST", url, headers=headers, data=payload, 
+    response = requests.request("POST", url, headers=headers, data=payload,
                                 files=files)
 
     job_resp = {'job': {
@@ -58,7 +58,7 @@ def get_eccr_UUID(code):
         if response.json()[0]['@type']:
 
             job_resp['job']['job_type'] = response.json()[0]['@type']
-            
+
         if response.json()[0]['name']['@value']:
 
             job_resp['job']['name'] = response.json()[0]['name']['@value']

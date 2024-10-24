@@ -11,7 +11,7 @@ from bs4 import BeautifulSoup
 from core.management.utils.eccr_client import get_eccr_UUID
 from core.management.utils.xia_internal import (dict_flatten, get_key_dict,
                                                 traverse_dict_with_key_list)
-from core.serializers import MetadataLedgerSerializer
+# from core.serializers import MetadataLedgerSerializer
 
 logger = logging.getLogger('dict_config_logger')
 
