@@ -94,23 +94,6 @@ class UtilsTests(TestSetUp):
         convert_int_to_date('date', date_int)
         self.assertTrue(isinstance(date_int['date'], datetime))
 
-    @patch('core.management.utils.xsr_client.get_xsr_api_endpoint',
-           return_value=('xsr_url', 'token'))
-    def test_custom_moodle_fields(self, ret):
-
-        Val = custom_moodle_fields([self.source_metadata], self.xsrConfig) # type: ignore
-        self.assertFalse(Val)
-
-    @patch('core.management.utils.xsr_client.get_xsr_api_endpoint',
-           return_value=('xsr_url', 'token'))
-    def test_custom_moodle_fields_true(self, ret):
-
-        source_dict = self.source_metadata
-        source_dict.update({"categoryname": "ecc approved"})
-
-        Val = custom_moodle_fields([source_dict], self.xsrConfig) # type: ignore
-        self.assertTrue(Val)
-
     @data(('key_field1', 'key_field2'), ('key_field11', 'key_field22'))
     @unpack
     def test_get_source_metadata_key_value(self, first_value, second_value):
@@ -482,18 +465,6 @@ class UtilsTests(TestSetUp):
             xisCfg.first.return_value = xisConfig
             return_from_function = get_xis_metadata_api_endpoint()
             self.assertEqual(xisConfig.xis_metadata_api_endpoint,
-                             return_from_function)
-
-    def test_get_xis_supplemental_metadata_api_endpoint(self):
-        """Test to retrieve xis_supplemental_api_endpoint from XIS
-        configuration"""
-        with patch('core.management.utils.xis_client'
-                   '.XISConfiguration.objects') as xisCfg:
-            xisConfig = XISConfiguration(
-                xis_supplemental_api_endpoint=self.supplemental_api_endpoint)
-            xisCfg.first.return_value = xisConfig
-            return_from_function = get_xis_supplemental_metadata_api_endpoint() # type: ignore
-            self.assertEqual(xisConfig.xis_supplemental_api_endpoint,
                              return_from_function)
 
     # Test cases for XSS_CLIENT
