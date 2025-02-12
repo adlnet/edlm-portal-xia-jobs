@@ -35,7 +35,7 @@ from .test_setup import TestSetUp
 logger = logging.getLogger('dict_config_logger')
 
 
-@tag('unit1')
+@tag('unit')
 @ddt
 class UtilsTests(TestSetUp):
     """Unit Test cases for utils """
