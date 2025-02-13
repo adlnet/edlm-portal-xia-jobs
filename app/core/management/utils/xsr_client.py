@@ -11,19 +11,8 @@ from bs4 import BeautifulSoup
 from core.management.utils.eccr_client import get_eccr_UUID
 from core.management.utils.xia_internal import (dict_flatten, get_key_dict,
                                                 traverse_dict_with_key_list)
-# from core.serializers import MetadataLedgerSerializer
 
 logger = logging.getLogger('dict_config_logger')
-
-
-# class TokenAuth(AuthBase):
-#     """Attaches HTTP Authentication Header to the given Request object."""
-
-#     def __call__(self, r, token_name='Authorization-Key'):
-#         # modify and return the request
-
-#         r.headers[token_name] = get_P1PS_team_token()
-#         return r
 
 
 def get_xsr_api_endpoint(xsr_obj, page, endpoint):

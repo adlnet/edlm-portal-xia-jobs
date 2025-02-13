@@ -155,29 +155,21 @@ class TestSetUp(TestCase):
             'metadata_record_uuid': UUID(
                 '09edea0e-6c83-40a6-951e-2acee3e99502'),
             'target_metadata': {
-                "Course": {
-                    "CourseCode": "TestData 123",
-                    "CourseTitle": "Acquisition Law",
-                    "CourseAudience": "test_data",
-                    "DepartmentName": "",
-                    "CourseObjective": "test_data",
-                    "CourseDescription": "test_data",
-                    "CourseProviderName": "AGENT",
-                    "CourseSpecialNotes": "test_data",
-                    "CoursePrerequisites": "None",
-                    "EstimatedCompletionTime": "4.5 days",
-                    "CourseSectionDeliveryMode": "Resident",
-                    "CourseAdditionalInformation": "None"
-                },
-                "CourseInstance": {
-                    "CourseURL":
-                        "https://agent.tes.com/ui/lms-learning-details"
-                },
-                "General_Information": {
-                    "EndDate": "end_date",
-                    "StartDate": "start_date"
+                'Job_Vacancy_Data': {
+                    'code': 'TestData 123',
+                    'CourseTitle': 'Acquisition Law',
+                    'JobPostingID': 'test_data',
+                    'DepartmentName': '',
+                    'CourseDescription': 'test_data',
+                    'ProviderName': 'AGENT',
+                    'CourseSpecialNotes': 'test_data',
+                    'CoursePrerequisites': 'None',
+                    'EstimatedCompletionTime': '4.5 days',
+                    'CourseSectionDeliveryMode': 'Resident',
+                    'CourseAdditionalInformation': 'None'
                 }
             },
+            'eccr_uuid': {},
             'target_metadata_hash': 'df0b51d7b45ca29682e930d236963584',
             'target_metadata_key': 'TestData 123_AGENT',
             'target_metadata_key_hash': 'd2a7f8cc5d5484a4dde099c6a21a903a'
@@ -186,29 +178,21 @@ class TestSetUp(TestCase):
             'unique_record_identifier': UUID(
                 '09edea0e-6c83-40a6-951e-2acee3e99502'),
             'metadata': {
-                "Course": {
-                    "CourseCode": "TestData 123",
-                    "CourseTitle": "Acquisition Law",
-                    "CourseAudience": "test_data",
-                    "DepartmentName": "",
-                    "CourseObjective": "test_data",
-                    "CourseDescription": "test_data",
-                    "CourseProviderName": "AGENT",
-                    "CourseSpecialNotes": "test_data",
-                    "CoursePrerequisites": "None",
-                    "EstimatedCompletionTime": "4.5 days",
-                    "CourseSectionDeliveryMode": "Resident",
-                    "CourseAdditionalInformation": "None"
-                },
-                "CourseInstance": {
-                    "CourseURL":
-                        "https://agent.tes.com/ui/lms-learning-details"
-                },
-                "General_Information": {
-                    "EndDate": "end_date",
-                    "StartDate": "start_date"
+                'Job_Vacancy_Data': {
+                    'code': 'TestData 123',
+                    'CourseTitle': 'Acquisition Law',
+                    'JobPostingID': 'test_data',
+                    'DepartmentName': '',
+                    'CourseDescription': 'test_data',
+                    'ProviderName': 'AGENT',
+                    'CourseSpecialNotes': 'test_data',
+                    'CoursePrerequisites': 'None',
+                    'EstimatedCompletionTime': '4.5 days',
+                    'CourseSectionDeliveryMode': 'Resident',
+                    'CourseAdditionalInformation': 'None'
                 }
             },
+            'eccr_uuid': {},
             'metadata_hash': 'df0b51d7b45ca29682e930d236963584',
             'metadata_key': 'TestData 123_AGENT',
             'metadata_key_hash': 'd2a7f8cc5d5484a4dde099c6a21a903a',
@@ -605,38 +589,6 @@ class TestSetUp(TestCase):
         self.target_overwrite_key_value_hash = \
             "d2a7f8cc5d5484a4dde099c6a21a903a"
         self.target_overwrite_hash_value = "eaf3e57b7f21b4d813f1258fb4ebf89d"
-
-        self.xia_data = {
-            'metadata_record_uuid': UUID(
-                '09edea0e-6c83-40a6-951e-2acee3e99502'),
-            'target_metadata': {
-                "p2881_course_profile": {
-                    "Course_ID": "TestData 123",
-                    "CourseTitle": "Acquisition Law",
-                    "CourseAudience": "test_data",
-                    "DepartmentName": "",
-                    "CourseObjective": "test_data",
-                    "CourseDescription": "test_data",
-                    "CourseProviderName": "AGENT",
-                    "CourseSpecialNotes": "test_data",
-                    "CoursePrerequisites": "None",
-                    "EstimatedCompletionTime": "4.5 days",
-                    "CourseSectionDeliveryMode": "Resident",
-                    "CourseAdditionalInformation": "None"
-                },
-                "CourseInstance": {
-                    "CourseURL":
-                        "https://agent.tes.com/ui/lms-learning-details"
-                },
-                "General_Information": {
-                    "EndDate": "end_date",
-                    "StartDate": "start_date"
-                }
-            },
-            'target_metadata_hash': 'df0b51d7b45ca29682e930d236963584',
-            'target_metadata_key': 'TestData 123_AGENT',
-            'target_metadata_key_hash': 'd2a7f8cc5d5484a4dde099c6a21a903a'
-        }
         self.xis_expected_data = {
             'unique_record_identifier': UUID(
                 '09edea0e-6c83-40a6-951e-2acee3e99502'),
@@ -684,6 +636,9 @@ class TestSetUp(TestCase):
                 '6acf7689ea81a1f792e7668a23b1acf5',
             'provider_name': 'AGENT'
         }
+
+        self.eccr_uuid = UUID(
+            '09edea0e-6c83-40a6-951e-2acee3e99502')
 
         self.xia_supplemental_data = {
             'metadata_record_uuid': UUID(
@@ -972,8 +927,9 @@ class TestSetUp(TestCase):
         self.metadata_df = pd.DataFrame.from_dict(
             {0: {1: self.source_metadata}}, orient='index')
 
-        return super().setUp()
+        self.eccr_host_example = 'http://example'
 
+        return super().setUp()
 
     def tearDown(self):
         self.patcher.stop()

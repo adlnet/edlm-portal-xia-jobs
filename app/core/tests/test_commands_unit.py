@@ -8,11 +8,17 @@ from django.db.utils import OperationalError
 from django.test import tag
 from django.utils import timezone
 
+from core.management.commands.load_target_metadata import (
+    get_records_to_load_into_xis,
+    post_data_to_xis,
+    rename_metadata_ledger_fields)
 from core.management.commands.extract_source_metadata import (
     add_publisher_to_source, extract_metadata_using_key, get_source_metadata)
 from core.management.commands.transform_source_metadata import (
-    get_metadata_fields_to_overwrite, get_source_metadata_for_transformation,
+    create_target_metadata_dict, get_metadata_fields_to_overwrite,
+    get_source_metadata_for_transformation,
     overwrite_append_metadata, overwrite_metadata_field,
+    store_transformed_source_metadata,
     transform_source_using_key, type_checking_target_metadata)
 from core.management.commands.validate_source_metadata import (
     get_source_metadata_for_validation,
@@ -21,7 +27,7 @@ from core.management.commands.validate_target_metadata import (
     get_target_metadata_for_validation, update_previous_instance_in_metadata,
     validate_target_using_key)
 from core.models import (MetadataFieldOverwrite, MetadataLedger,
-                         XIAConfiguration)
+                         XIAConfiguration, XISConfiguration)
 
 from .test_setup import TestSetUp
 
@@ -232,7 +238,23 @@ class CommandTests(TestSetUp):
         target_metadata = type_checking_target_metadata(1, target_metadata,
                                                         self.expected_datatype)
         self.assertIsInstance(target_metadata[0]['General_Information'][
-                                  "EndDate"], str)
+            "EndDate"], str)
+
+    def test_create_target_metadata_dict(self):
+        """Function to replace and transform source data to target data for
+        using target mapping schema"""
+        with patch('core.management.commands.'
+                   'transform_source_metadata'
+                   '.overwrite_metadata_field'), \
+            patch('core.management.commands.'
+                  'transform_source_metadata'
+                  '.type_checking_target_metadata') as mock_target_data:
+            mock_target_data.return_value = self.source_metadata
+            response = create_target_metadata_dict(
+                '1', {'key': {'use': 'required'}},
+                self.source_metadata, ['Key'], None)
+
+            self.assertIsInstance(response, dict)
 
     def test_get_source_metadata_for_transformation(self):
         """Test to Retrieving Source metadata from MetadataLedger that needs
@@ -249,6 +271,36 @@ class CommandTests(TestSetUp):
             return_from_function = get_source_metadata_for_transformation()
             self.assertEqual(meta_obj.first.return_value,
                              return_from_function)
+
+    def test_store_transformed_source_metadata(self):
+        """Test storing target metadata in MetadataLedger"""
+        # with patch('core.management.commands.transform_source_metadata'
+        #            '.MetadataLedger') as mock_data,\
+        with patch('core.models.confusable_homoglyphs_check'), \
+                patch('core.models.bleach_data_to_json') as mock_bleach:
+
+            metadata_ledger = MetadataLedger(
+                record_lifecycle_status='Active',
+                source_metadata=self.source_metadata,
+                source_metadata_hash=self.hash_value,
+                source_metadata_key=self.key_value,
+                source_metadata_key_hash=self.key_value_hash,
+                source_metadata_extraction_date=timezone.now())
+
+            mock_bleach.return_value = self.source_metadata
+
+            metadata_ledger.save()
+            store_transformed_source_metadata(
+                self.key_value, self.key_value_hash, self.target_data_dict,
+                self.hash_value)
+            source_data_dict = \
+                MetadataLedger.objects.values('source_metadata_key_hash',
+                                              'source_metadata').filter(
+                    source_metadata_validation_status='',
+                    record_lifecycle_status='Active').exclude(
+                    source_metadata_extraction_date=None)
+
+            self.assertTrue(source_data_dict)
 
     def test_transform_source_using_key_more_zero(self):
         """Test for transforming source data using target metadata schema
@@ -395,3 +447,139 @@ class CommandTests(TestSetUp):
         updated_value = MetadataLedger.objects. \
             get(target_metadata_key_hash=self.target_key_value_hash)
         self.assertEqual(updated_value.record_lifecycle_status, 'Inactive')
+
+    # Test cases for load_target_metadata
+
+    def test_rename_metadata_ledger_fields(self):
+        """Test for Renaming XIA column names to match with XIS column names"""
+        with patch('core.management.utils.xia_internal'
+                   '.get_publisher_detail'), \
+                patch('core.management.utils.xia_internal'
+                      '.XIAConfiguration.objects') as xisCfg:
+            xiaConfig = XIAConfiguration(publisher='AGENT')
+            xisCfg.first.return_value = xiaConfig
+            return_data = rename_metadata_ledger_fields(self.xia_data)
+
+            self.assertEquals(self.xis_expected_data['metadata_key'],
+                              return_data['vacancy_key'])
+            self.assertEquals(self.xis_expected_data['metadata_key_hash'],
+                              return_data['vacancy_key_hash'])
+            self.assertEquals(self.xis_expected_data['provider_name'],
+                              return_data['ProviderName'])
+
+    def test_get_records_to_load_into_xis_one_record(self):
+        """Test to Retrieve number of Metadata_Ledger records in XIA to load
+        into XIS  and calls the post_data_to_xis accordingly"""
+        with patch('core.management.commands.'
+                   'load_target_metadata.post_data_to_xis', return_value=None
+                   )as mock_post_data_to_xis, \
+                patch('core.management.commands.load_target_metadata.'
+                      'MetadataLedger.objects') as meta_obj:
+            meta_data = MetadataLedger(
+                record_lifecycle_status='Active',
+                source_metadata=self.source_metadata,
+                target_metadata=self.target_metadata,
+                target_metadata_hash=self.target_hash_value,
+                target_metadata_key_hash=self.target_key_value_hash,
+                target_metadata_key=self.target_key_value,
+                source_metadata_transformation_date=timezone.now(),
+                target_metadata_validation_status='Y',
+                source_metadata_validation_status='Y',
+                target_metadata_transmission_status='Ready')
+            meta_obj.return_value = meta_obj
+            meta_obj.exclude.return_value = meta_obj
+            meta_obj.values.return_value = [meta_data]
+            meta_obj.filter.side_effect = [meta_obj, meta_obj]
+            get_records_to_load_into_xis()
+            self.assertEqual(
+                mock_post_data_to_xis.call_count, 1)
+
+    def test_get_records_to_load_into_xis_zero(self):
+        """Test to Retrieve number of Metadata_Ledger records in XIA to load
+        into XIS  and calls the post_data_to_xis accordingly"""
+        with patch(
+                'core.management.commands.load_target_metadata'
+                '.post_data_to_xis', return_value=None)as \
+                mock_post_data_to_xis, \
+                patch(
+                    'core.management.commands.'
+                    'load_target_metadata.MetadataLedger.objects') as meta_obj:
+            meta_obj.return_value = meta_obj
+            meta_obj.exclude.return_value = meta_obj
+            meta_obj.filter.side_effect = [meta_obj, meta_obj]
+            get_records_to_load_into_xis()
+            self.assertEqual(
+                mock_post_data_to_xis.call_count, 0)
+
+    def test_post_data_to_xis_zero(self):
+        """Test for POSTing XIA metadata_ledger to XIS metadata_ledger
+        when data is not present"""
+        data = []
+        with patch('core.management.commands'
+                   '.load_target_metadata.rename_metadata_ledger_fields',
+                   return_value=self.xis_expected_data), \
+                patch('core.management.utils.xia_internal'
+                      '.get_publisher_detail'), \
+                patch('core.management.utils.xia_internal'
+                      '.XIAConfiguration.objects') as xiaCfg, \
+                patch('core.management.commands.load_target_metadata.'
+                      'MetadataLedger.objects') as meta_obj, \
+                patch('requests.post') as response_obj, \
+                patch(
+                    'core.management.commands.'
+                    'load_target_metadata'
+                    '.get_records_to_load_into_xis',
+                    return_value=None) as mock_check_records_to_load:
+            xiaConfig = XIAConfiguration(publisher='AGENT')
+            xiaCfg.first.return_value = xiaConfig
+            response_obj.return_value = response_obj
+            response_obj.status_code = 201
+
+            meta_obj.return_value = meta_obj
+            meta_obj.exclude.return_value = meta_obj
+            meta_obj.update.return_value = meta_obj
+            meta_obj.filter.side_effect = [meta_obj, meta_obj, meta_obj,
+                                           meta_obj]
+
+            post_data_to_xis(data)
+            self.assertEqual(response_obj.call_count, 0)
+            self.assertEqual(mock_check_records_to_load.call_count, 1)
+
+    def test_post_data_to_xis_more_than_one(self):
+        """Test for POSTing XIA metadata_ledger to XIS metadata_ledger
+        when more than one rows are passing"""
+        data = [self.xia_data,
+                self.xia_data]
+        with patch(
+                'core.management.commands.load_target_metadata'
+                '.rename_metadata_ledger_fields',
+                return_value=self.xis_expected_data), \
+                patch('core.management.utils.xia_internal'
+                      '.get_publisher_detail'), \
+                patch('core.management.utils.xia_internal'
+                      '.XIAConfiguration.objects') as xiaCfg, \
+                patch('core.management.commands.load_target_metadata.'
+                      'MetadataLedger.objects') as meta_obj, \
+                patch('requests.post') as response_obj, \
+                patch('core.management.utils.xis_client.'
+                      'XISConfiguration.objects') as xisCfg, \
+                patch('core.management.commands.load_target_metadata.'
+                      'get_records_to_load_into_xis',
+                      return_value=None) as mock_check_records_to_load:
+            xiaConfig = XIAConfiguration(publisher='AGENT')
+            xiaCfg.first.return_value = xiaConfig
+            xisConfig = XISConfiguration(
+                xis_metadata_api_endpoint=self.xis_api_endpoint_url)
+            xisCfg.first.return_value = xisConfig
+            response_obj.return_value = response_obj
+            response_obj.status_code = 201
+
+            meta_obj.return_value = meta_obj
+            meta_obj.exclude.return_value = meta_obj
+            meta_obj.update.return_value = meta_obj
+            meta_obj.filter.side_effect = [meta_obj, meta_obj, meta_obj,
+                                           meta_obj]
+
+            post_data_to_xis(data)
+            self.assertEqual(response_obj.call_count, 2)
+            self.assertEqual(mock_check_records_to_load.call_count, 1)

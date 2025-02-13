@@ -37,42 +37,6 @@ def get_key_dict(key_value, key_value_hash):
     return key
 
 
-def replace_field_on_target_schema(ind1,
-                                   target_data_dict):
-    """Replacing values in field referring target schema EducationalContext to
-    course.MANDATORYTRAINING"""
-
-    target_name = {
-        "Course": [
-            "EducationalContext",
-        ]
-    }
-    for target_section_name in target_name:
-        for target_field_name in target_name[target_section_name]:
-            if target_data_dict[ind1][target_section_name]. \
-                    get(target_field_name):
-
-                if target_data_dict[ind1][target_section_name][
-                    target_field_name] == 'y' or \
-                        target_data_dict[ind1][
-                            target_section_name][
-                            target_field_name] == 'Y':
-                    target_data_dict[ind1][
-                        target_section_name][
-                        target_field_name] = 'Mandatory'
-                else:
-                    if target_data_dict[ind1][
-                        target_section_name][
-                        target_field_name] == 'n' or \
-                            target_data_dict[ind1][
-                                target_section_name][
-                                target_field_name] == 'N':
-                        target_data_dict[ind1][
-                            target_section_name][
-                            target_field_name] = 'Non - ' \
-                                                 'Mandatory'
-
-
 def get_target_metadata_key_value(data_dict):
     """Function to create key value for target metadata """
     field = {
@@ -163,8 +127,6 @@ def dict_flatten(data_dict, required_column_list):
                                 element, flatten_dict, required_column_list)
         # If Json Field value is a list
         elif isinstance(data_dict[element], list):
-            # flatten_list_object(data_dict[element],
-            #                     element, flatten_dict, required_column_list)
             update_flattened_object(data_dict[element],
                                     element, flatten_dict)
 
@@ -177,55 +139,6 @@ def dict_flatten(data_dict, required_column_list):
     return flatten_dict
 
 
-def flatten_list_object(list_obj, prefix, flatten_dict, required_column_list):
-    """function to flatten list object"""
-    # required_prefix_list = []
-    # for i in range(len(list_obj)):
-    #     #  storing initial flatten_dict for resetting values
-    #     if not i:
-    #         flatten_dict_temp = flatten_dict
-    #     # resetting flatten_dict to initial value
-    #     else:
-    #         flatten_dict = flatten_dict_temp
-
-    #     if isinstance(list_obj[i], list):
-    #         flatten_list_object(list_obj[i], prefix, flatten_dict,
-    #                             required_column_list)
-
-    #     elif isinstance(list_obj[i], dict):
-    #         flatten_dict_object(list_obj[i], prefix, flatten_dict,
-    #                             required_column_list)
-
-    #     else:
-    #         update_flattened_object(list_obj[i], prefix, flatten_dict)
-
-    #     # looping through required column names
-    #     for required_prefix in required_column_list:
-    #         # finding matching value along with index
-    #         try:
-    #             required_prefix.index(prefix)
-    #         except ValueError:
-    #             continue
-    #         else:
-    #             if required_prefix.index(prefix) == 0:
-    #                 required_prefix_list.append(required_prefix)
-    #     #  setting up flag for checking validation
-    #     passed = True
-
-    #     # looping through items in required columns with matching prefix
-    #     for item_to_check in required_prefix_list:
-    #         #  flag if value not found
-    #         if item_to_check in flatten_dict:
-    #             if not flatten_dict[item_to_check]:
-    #                 passed = False
-    #         else:
-    #             passed = False
-
-    #     # if all required values are skip other object in list
-    #     if passed:
-    #         break
-
-
 def flatten_dict_object(dict_obj, prefix, flatten_dict, required_column_list):
     """function to flatten dictionary object"""
     for element in dict_obj:
@@ -234,8 +147,6 @@ def flatten_dict_object(dict_obj, prefix, flatten_dict, required_column_list):
                                 element, flatten_dict, required_column_list)
 
         elif isinstance(dict_obj[element], list):
-            # flatten_list_object(dict_obj[element], prefix + "." +
-            #                     element, flatten_dict, required_column_list)
             update_flattened_object(dict_obj[element], prefix + "." +
                                     element, flatten_dict)
 
