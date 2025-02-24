@@ -1,14 +1,13 @@
 import logging
 
-from django.core.management.base import BaseCommand
-from django.utils import timezone
-
 from core.management.utils.xia_internal import (dict_flatten, is_date,
                                                 required_recommended_logs)
 from core.management.utils.xss_client import (
     get_data_types_for_validation, get_required_fields_for_validation,
     get_target_validation_schema)
 from core.models import MetadataLedger
+from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -67,70 +66,97 @@ def store_target_metadata_validation_status(target_data_dict, key_value_hash,
             metadata_record_inactivation_date=timezone.now())
 
 
+def logging_required_recommended(validation_result,
+                                 record_status_result,
+                                 required_column_list,
+                                 recommended_column_list,
+                                 flattened_source_data, ind):
+    """ Logging required recommended"""
+    # validate for required values in data
+    for item_name in required_column_list:
+        # update validation and record status for invalid data
+        # Log out error for missing required values
+        # item_name = item[:-len(".use")]
+        if item_name in flattened_source_data:
+            if not flattened_source_data[item_name]:
+                validation_result = 'N'
+                record_status_result = 'Inactive'
+                required_recommended_logs(ind, "Required", item_name)
+        else:
+            validation_result = 'N'
+            record_status_result = 'Inactive'
+            required_recommended_logs(ind, "Required", item_name)
+
+    # validate for recommended values in data
+    for item_name in recommended_column_list:
+        # Log out warning for missing recommended values
+        # item_name = item[:-len(".use")]
+        if item_name in flattened_source_data:
+            if not flattened_source_data[item_name]:
+                required_recommended_logs(ind, "Recommended", item_name)
+        else:
+            required_recommended_logs(ind, "Recommended", item_name)
+
+    return validation_result, record_status_result
+
+
+def log_datatype_error(item, expected_data_types,
+                       flattened_source_data, index):
+
+    if item in expected_data_types:
+        # type checking for datetime datatype fields
+        if expected_data_types[item] == "datetime":
+            if not is_date(flattened_source_data[item]):
+                required_recommended_logs(index, "datatype",
+                                          item)
+        # type checking for datatype fields(except datetime)
+        elif (not isinstance(flattened_source_data[item],
+                             expected_data_types[item])):
+            required_recommended_logs(index, "datatype",
+                                      item)
+
+
 def validate_target_using_key(target_data_dict, required_column_list,
                               recommended_column_list, expected_data_types):
     """Validating target data against required & recommended column names"""
 
     logger.info('Validating and updating records in MetadataLedger table for '
                 'target data')
-    len_target_metadata = len(target_data_dict)
-    for ind in range(len_target_metadata):
+    index = 0
+    for target_data in target_data_dict:
         # Updating default validation for all records
         validation_result = 'Y'
         record_status_result = 'Active'
 
         # flattened source data created for reference
-        flattened_source_data = dict_flatten(target_data_dict[ind]
+        flattened_source_data = dict_flatten(target_data
                                              ['target_metadata'],
                                              required_column_list)
-        # validate for required values in data
-        for item_name in required_column_list:
-            # update validation and record status for invalid data
-            # Log out error for missing required values
-            # item_name = item[:-len(".use")]
-            if item_name in flattened_source_data:
-                if not flattened_source_data[item_name]:
-                    validation_result = 'N'
-                    record_status_result = 'Inactive'
-                    required_recommended_logs(ind, "Required", item_name)
-            else:
-                validation_result = 'N'
-                record_status_result = 'Inactive'
-                required_recommended_logs(ind, "Required", item_name)
-
-        # validate for recommended values in data
-        for item_name in recommended_column_list:
-            # Log out warning for missing recommended values
-            # item_name = item[:-len(".use")]
-            if item_name in flattened_source_data:
-                if not flattened_source_data[item_name]:
-                    required_recommended_logs(ind, "Recommended", item_name)
-            else:
-                required_recommended_logs(ind, "Recommended", item_name)
+        # Logging required recommended
+        validation_result, record_status_result = \
+            logging_required_recommended(validation_result,
+                                         record_status_result,
+                                         required_column_list,
+                                         recommended_column_list,
+                                         flattened_source_data, index)
         # Type checking for values in metadata
         for item in flattened_source_data:
+
             # check if datatype has been assigned to field
-            if item in expected_data_types:
-                # type checking for datetime datatype fields
-                if expected_data_types[item] == "datetime":
-                    if not is_date(flattened_source_data[item]):
-                        required_recommended_logs(ind, "datatype",
-                                                  item)
-                # type checking for datatype fields(except datetime)
-                elif (not isinstance(flattened_source_data[item],
-                                     expected_data_types[item])):
-                    required_recommended_logs(ind, "datatype",
-                                              item)
+            log_datatype_error(item, expected_data_types,
+                               flattened_source_data, index)
 
         # assigning key hash value for source metadata
-        key_value_hash = target_data_dict[ind]['target_metadata_key_hash']
+        key_value_hash = target_data['target_metadata_key_hash']
         # Calling function to update validation status
         store_target_metadata_validation_status(target_data_dict,
                                                 key_value_hash,
                                                 validation_result,
                                                 record_status_result,
-                                                target_data_dict[ind]
+                                                target_data
                                                 ['target_metadata'])
+        # increment index
+        index = index + 1
 
 
 class Command(BaseCommand):

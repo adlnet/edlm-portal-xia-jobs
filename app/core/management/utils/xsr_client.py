@@ -7,33 +7,32 @@ import html2text
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-
-from core.management.utils.eccr_client import get_eccr_UUID
+from core.management.utils.eccr_client import get_eccr_uuid
 from core.management.utils.xia_internal import (dict_flatten, get_key_dict,
                                                 traverse_dict_with_key_list)
 
 logger = logging.getLogger('dict_config_logger')
 
 
-def get_xsr_api_endpoint(xsr_obj, page, endpoint):
+def get_xsr_api_endpoint(xsr_obj, endpoint):
     """Setting API endpoint from XIA and XIS communication """
     logger.debug("Retrieve xsr_api_endpoint from XSR configuration")
     xsr_endpoint = xsr_obj.xsr_api_endpoint + endpoint
     return xsr_endpoint, xsr_obj.token
 
 
-def get_xsr_api_response(xsr_obj, page, endpoint):
+def get_xsr_api_response(xsr_obj, endpoint):
     """Function to get api response from xsr endpoint"""
     # url of rss feed
 
-    xsr_data, token = get_xsr_api_endpoint(xsr_obj, page, endpoint)
+    xsr_data, token = get_xsr_api_endpoint(xsr_obj, endpoint)
 
     url = xsr_data
     headers = {"Authorization-Key": token}
 
     # creating HTTP response object from given url
     try:
-        resp = requests.get(url, verify=False, headers=headers)
+        resp = requests.get(url, headers=headers)
     except requests.exceptions.RequestException as e:
         logger.error(e)
         raise SystemExit('Exiting! Can not make connection with XSR.')
@@ -42,14 +41,13 @@ def get_xsr_api_response(xsr_obj, page, endpoint):
 
 
 # Function to convert
-def listToString(s):
+def list_to_string(s):
     # initialize an empty string
     str1 = ", "
-    # return string
     return (str1.join(s))
 
 
-def custom_Jobs_edits(source_data):
+def custom_jobs_edits(source_data):
     """Function to perform custom edits to USA jobs data"""
     for data in source_data:
         for key in data["MatchedObjectDescriptor"]:
@@ -61,7 +59,7 @@ def custom_Jobs_edits(source_data):
                         data_list.append(value)
                 data["MatchedObjectDescriptor"][key] = data_list
                 data["MatchedObjectDescriptor"][key] =\
-                    listToString(data["MatchedObjectDescriptor"][key])
+                    list_to_string(data["MatchedObjectDescriptor"][key])
 
 
 def extract_source(xsr_obj):
@@ -69,7 +67,7 @@ def extract_source(xsr_obj):
 
     page = 1
 
-    resp = get_xsr_api_response(xsr_obj, page, "/api/codelist/cyberworkroles")
+    resp = get_xsr_api_response(xsr_obj, "/api/codelist/cyberworkroles")
 
     cwr_dict = json.loads(resp.text)
 
@@ -84,7 +82,7 @@ def extract_source(xsr_obj):
 
     for code in cwr_list:
         endpoint = '/api/Search?cwr=' + code
-        resp_code = get_xsr_api_response(xsr_obj, page, endpoint)
+        resp_code = get_xsr_api_response(xsr_obj , endpoint)
 
         if resp.status_code == 200:
             source_data_dict = json.loads(resp_code.text)
@@ -95,7 +93,7 @@ def extract_source(xsr_obj):
 
             source_df = pd.DataFrame(source_data)
 
-            eccr_uuid = get_eccr_UUID(code)
+            eccr_uuid = get_eccr_uuid(code)
             source_df["code"] = code
             if eccr_uuid:
                 source_df["eccr_uuid"] = str(eccr_uuid)
@@ -159,10 +157,10 @@ def convert_int_to_date(element, target_data_dict):
     check_key_dict = target_data_dict
     check_key_dict = traverse_dict_with_key_list(check_key_dict, key_list)
     if check_key_dict:
-        if key_list[-1] in check_key_dict:
-            if isinstance(check_key_dict[key_list[-1]], int):
-                check_key_dict[key_list[-1]] = datetime. \
-                    fromtimestamp(check_key_dict[key_list[-1]])
+        if key_list[-1] in check_key_dict and \
+            isinstance(check_key_dict[key_list[-1]], int):
+            check_key_dict[key_list[-1]] = datetime. \
+                fromtimestamp(check_key_dict[key_list[-1]])
 
 
 def find_dates(data_dict):
@@ -183,10 +181,9 @@ def convert_html(element, target_data_dict):
     key_list = element.split(".")
     check_key_dict = target_data_dict
     check_key_dict = traverse_dict_with_key_list(check_key_dict, key_list)
-    if check_key_dict:
-        if key_list[-1] in check_key_dict:
-            check_key_dict[key_list[-1]] = \
-                html2text.html2text(check_key_dict[key_list[-1]])
+    if check_key_dict and key_list[-1] in check_key_dict:
+        check_key_dict[key_list[-1]] = \
+            html2text.html2text(check_key_dict[key_list[-1]])
 
 
 def find_html(data_dict):
@@ -194,8 +191,6 @@ def find_html(data_dict):
     data_flattened = dict_flatten(data_dict, [])
 
     for element in data_flattened.keys():
-        if data_flattened[element]:
-            if bool(BeautifulSoup(str(data_flattened[element]),
-                                  "html.parser").find()):
-                convert_html(element, data_dict)
+        if data_flattened[element] and bool(BeautifulSoup(str(data_flattened[element]),"html.parser").find()):
+            convert_html(element, data_dict)
     return data_dict

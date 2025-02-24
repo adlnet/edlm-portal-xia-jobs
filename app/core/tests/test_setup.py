@@ -2,9 +2,8 @@ from unittest.mock import patch
 from uuid import UUID
 
 import pandas as pd
-from django.test import TestCase
-
 from core.models import XSRConfiguration
+from django.test import TestCase
 
 
 class TestSetUp(TestCase):

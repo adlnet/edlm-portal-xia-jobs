@@ -1,13 +1,12 @@
 import logging
 
-from django.core.management.base import BaseCommand
-from django.utils import timezone
-
 from core.management.utils.xia_internal import (dict_flatten,
                                                 required_recommended_logs)
 from core.management.utils.xss_client import (
     get_required_fields_for_validation, get_source_validation_schema)
 from core.models import MetadataLedger
+from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -52,6 +51,33 @@ def store_source_metadata_validation_status(source_data_dict,
         )
 
 
+def logging_required_recommended(required_column_list,
+                                 recommended_column_list,
+                                 flattened_source_data, ind):
+    """ Logging required recommended"""
+    # validate for required values in data
+    for item in required_column_list:
+        # update validation and record status for invalid data
+        # Log out error for missing required values
+        if item in flattened_source_data:
+            if not flattened_source_data[item]:
+                validation_result = 'N'
+                required_recommended_logs(ind, "Required", item)
+        else:
+            validation_result = 'N'
+            required_recommended_logs(ind, "Required", item)
+
+    # validate for recommended values in data
+    for item in recommended_column_list:
+        # Log out warning for missing recommended values
+        if item in flattened_source_data:
+            if not flattened_source_data[item]:
+                required_recommended_logs(ind, "Recommended", item)
+        else:
+            required_recommended_logs(ind, "Recommended", item)
+    return validation_result
+
+
 def validate_source_using_key(source_data_dict, required_column_list,
                               recommended_column_list):
     """Validating source data against required & recommended column names"""
@@ -68,26 +94,11 @@ def validate_source_using_key(source_data_dict, required_column_list,
         flattened_source_data = dict_flatten(source_data_dict[ind]
                                              ['source_metadata'],
                                              required_column_list)
-        # validate for required values in data
-        for item in required_column_list:
-            # update validation and record status for invalid data
-            # Log out error for missing required values
-            if item in flattened_source_data:
-                if not flattened_source_data[item]:
-                    validation_result = 'N'
-                    required_recommended_logs(ind, "Required", item)
-            else:
-                validation_result = 'N'
-                required_recommended_logs(ind, "Required", item)
-
-        # validate for recommended values in data
-        for item in recommended_column_list:
-            # Log out warning for missing recommended values
-            if item in flattened_source_data:
-                if not flattened_source_data[item]:
-                    required_recommended_logs(ind, "Recommended", item)
-            else:
-                required_recommended_logs(ind, "Recommended", item)
+        # Logging required recommended
+        validation_result = logging_required_recommended(validation_result,
+                                                         required_column_list,
+                                                         recommended_column_list,
+                                                         flattened_source_data, ind)
         # assigning key hash value for source metadata
         key_value_hash = source_data_dict[ind]['source_metadata_key_hash']
         # Calling function to update validation status

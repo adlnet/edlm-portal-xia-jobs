@@ -2,12 +2,11 @@ import logging
 from unittest.mock import patch
 
 import pandas as pd
-from ddt import ddt
-from django.test import tag
-
 from core.management.commands.extract_source_metadata import (
     extract_metadata_using_key, store_source_metadata)
 from core.models import MetadataLedger
+from ddt import ddt
+from django.test import tag
 
 from .test_setup import TestSetUp
 

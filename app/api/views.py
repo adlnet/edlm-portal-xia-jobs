@@ -1,11 +1,10 @@
 import logging
 
+from core.tasks import execute_xia_automated_workflow
 from rest_framework import permissions, status
 from rest_framework.decorators import permission_classes
 from rest_framework.response import Response
 from rest_framework.views import APIView
-
-from core.tasks import execute_xia_automated_workflow
 
 logger = logging.getLogger('dict_config_logger')
 

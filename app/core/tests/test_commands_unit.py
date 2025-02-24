@@ -2,23 +2,15 @@ import logging
 from unittest.mock import patch
 
 import pandas as pd
-from ddt import ddt
-from django.core.management import call_command
-from django.db.utils import OperationalError
-from django.test import tag
-from django.utils import timezone
-
-from core.management.commands.load_target_metadata import (
-    get_records_to_load_into_xis,
-    post_data_to_xis,
-    rename_metadata_ledger_fields)
 from core.management.commands.extract_source_metadata import (
     add_publisher_to_source, extract_metadata_using_key, get_source_metadata)
+from core.management.commands.load_target_metadata import (
+    get_records_to_load_into_xis, post_data_to_xis,
+    rename_metadata_ledger_fields)
 from core.management.commands.transform_source_metadata import (
     create_target_metadata_dict, get_metadata_fields_to_overwrite,
-    get_source_metadata_for_transformation,
-    overwrite_append_metadata, overwrite_metadata_field,
-    store_transformed_source_metadata,
+    get_source_metadata_for_transformation, overwrite_append_metadata,
+    overwrite_metadata_field, store_transformed_source_metadata,
     transform_source_using_key, type_checking_target_metadata)
 from core.management.commands.validate_source_metadata import (
     get_source_metadata_for_validation,
@@ -28,6 +20,11 @@ from core.management.commands.validate_target_metadata import (
     validate_target_using_key)
 from core.models import (MetadataFieldOverwrite, MetadataLedger,
                          XIAConfiguration, XISConfiguration)
+from ddt import ddt
+from django.core.management import call_command
+from django.db.utils import OperationalError
+from django.test import tag
+from django.utils import timezone
 
 from .test_setup import TestSetUp
 

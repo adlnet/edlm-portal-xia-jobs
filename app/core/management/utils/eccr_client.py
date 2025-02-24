@@ -1,7 +1,6 @@
 import logging
 
 import requests
-
 from core.models import ECCRConfiguration
 
 logger = logging.getLogger('dict_config_logger')
@@ -20,7 +19,7 @@ def get_eccr_api_endpoint():
     return eccr_endpoint
 
 
-def get_eccr_UUID(code):
+def get_eccr_uuid(code):
     """Setting ECCR UUID using CWR Code communication """
 
     if not get_eccr_api_endpoint():

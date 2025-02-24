@@ -1,17 +1,14 @@
 import hashlib
 import json
 import logging
-import pandas as pd
 from datetime import datetime
 from unittest.mock import patch
 
-from ddt import data, ddt, unpack
-from django.test import tag
-
+import pandas as pd
+from core.management.utils.eccr_client import (get_eccr_api_endpoint,
+                                               get_eccr_uuid)
 from core.management.utils.model_help import (bleach_data_to_json,
                                               confusable_homoglyphs_check)
-from core.management.utils.eccr_client import (get_eccr_UUID,
-                                               get_eccr_api_endpoint)
 from core.management.utils.xia_internal import (dict_flatten,
                                                 flatten_dict_object,
                                                 get_key_dict,
@@ -24,19 +21,19 @@ from core.management.utils.xia_internal import (dict_flatten,
 from core.management.utils.xis_client import get_xis_metadata_api_endpoint
 from core.management.utils.xsr_client import (convert_html,
                                               convert_int_to_date,
-                                              extract_source,
-                                              find_dates,
+                                              extract_source, find_dates,
                                               find_html,
                                               get_source_metadata_key_value,
                                               get_xsr_api_endpoint,
                                               get_xsr_api_response,
-                                              listToString,
-                                              read_source_file)
+                                              list_to_string, read_source_file)
 from core.management.utils.xss_client import (
     get_data_types_for_validation, get_required_fields_for_validation,
     get_source_validation_schema, get_target_metadata_for_transformation,
     get_target_validation_schema, read_json_data, xss_get)
 from core.models import XIAConfiguration, XISConfiguration
+from ddt import data, ddt, unpack
+from django.test import tag
 
 from .test_setup import TestSetUp
 
@@ -51,7 +48,7 @@ class UtilsTests(TestSetUp):
     # Test cases for XSR_CLIENT
     def test_get_xsr_api_endpoint(self):
         """Test to check if API endpoint is present"""
-        api_end, tk = get_xsr_api_endpoint(self.xsrConfig, '', '')
+        api_end, tk = get_xsr_api_endpoint(self.xsrConfig, '')
         self.assertEqual(self.xsr_api_endpoint_url, api_end)
         self.assertEqual(self.token, tk)
 
@@ -63,7 +60,7 @@ class UtilsTests(TestSetUp):
             response_obj.return_value = response_obj
 
             result_xsr_api_response = \
-                get_xsr_api_response(self.xsrConfig, 'page', '/endpoint')
+                get_xsr_api_response(self.xsrConfig, '/endpoint')
             self.assertTrue(result_xsr_api_response)
 
     def test_extract_source(self):
@@ -90,7 +87,7 @@ class UtilsTests(TestSetUp):
         self.assertIsInstance(result_data, list)
 
     def test_listToString(self):
-        converted_string = listToString('[1, 2, 3, 4]')
+        converted_string = list_to_string('[1, 2, 3, 4]')
 
         self.assertTrue(isinstance(converted_string, str))
 
@@ -464,7 +461,7 @@ class UtilsTests(TestSetUp):
                                                             'name': {'@value':
                                                                      'name'}
                                                              }]
-            response = get_eccr_UUID('')
+            response = get_eccr_uuid('')
             self.assertTrue(response)
 
     # Test cases for MODEL_HELP

@@ -1,11 +1,10 @@
 from unittest.mock import patch
 
+from core.models import (MetadataFieldOverwrite, MetadataLedger,
+                         XIAConfiguration, XISConfiguration, XSRConfiguration)
 from django.core.exceptions import ValidationError
 from django.test import TestCase, tag
 from django.utils import timezone
-
-from core.models import (MetadataFieldOverwrite, MetadataLedger,
-                         XIAConfiguration, XISConfiguration, XSRConfiguration)
 
 
 @tag('unit')

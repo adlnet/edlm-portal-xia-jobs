@@ -3,9 +3,8 @@ import hashlib
 import logging
 from distutils.util import strtobool
 
-from dateutil.parser import parse
-
 from core.models import XIAConfiguration
+from dateutil.parser import parse
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -71,10 +70,13 @@ def get_target_metadata_key_value(data_dict):
 def required_recommended_logs(id_num, category, field):
     """logs the missing required and recommended """
 
+    # Use a const to satisfy code smells
+    record_str = "Record "
+
     # Logs the missing required columns
     if category == 'Required':
         logger.error(
-            "Record " + str(
+            record_str + str(
                 id_num) + " does not have all " + category +
             " fields."
             + field + " field is empty")
@@ -82,7 +84,7 @@ def required_recommended_logs(id_num, category, field):
     # Logs the missing recommended columns
     if category == 'Recommended':
         logger.warning(
-            "Record " + str(
+            record_str + str(
                 id_num) + " does not have all " + category +
             " fields."
             + field + " field is empty")
@@ -90,7 +92,7 @@ def required_recommended_logs(id_num, category, field):
     # Logs the inaccurate datatype columns
     if category == 'datatype':
         logger.warning(
-            "Record " + str(
+            record_str + str(
                 id_num) + " does not have the expected " + category +
             " for the field " + field)
 
@@ -125,11 +127,6 @@ def dict_flatten(data_dict, required_column_list):
         if isinstance(data_dict[element], dict):
             flatten_dict_object(data_dict[element],
                                 element, flatten_dict, required_column_list)
-        # If Json Field value is a list
-        elif isinstance(data_dict[element], list):
-            update_flattened_object(data_dict[element],
-                                    element, flatten_dict)
-
         # If Json Field value is a string
         else:
             update_flattened_object(data_dict[element],
@@ -145,11 +142,6 @@ def flatten_dict_object(dict_obj, prefix, flatten_dict, required_column_list):
         if isinstance(dict_obj[element], dict):
             flatten_dict_object(dict_obj[element], prefix + "." +
                                 element, flatten_dict, required_column_list)
-
-        elif isinstance(dict_obj[element], list):
-            update_flattened_object(dict_obj[element], prefix + "." +
-                                    element, flatten_dict)
-
         else:
             update_flattened_object(dict_obj[element], prefix + "." +
                                     element, flatten_dict)
@@ -174,42 +166,27 @@ def convert_date_to_isoformat(date):
 def type_cast_overwritten_values(field_type, field_value):
     """function to check type of overwritten value and convert it into
     required format"""
+
     value = field_value
     if field_value:
         if field_type == "int":
             try:
                 value = int(field_value)
-            except ValueError:
-                logger.error("Field Value " + field_value +
-                             " and Field Data type " + field_type +
-                             " is not valid")
-            except TypeError:
-                logger.error("Field Value " + field_value +
-                             " and Field Data type " + field_type +
-                             " do not match")
+            except Exception as e: # pylint: disable=broad-except
+                logger.error(e)
 
-        if field_type == "bool":
+        elif field_type == "bool":
             try:
                 value = strtobool(field_value)
-            except ValueError:
-                logger.error("Field Value " + field_value +
-                             " and Field Data type " + field_type +
-                             " is not valid")
-            except TypeError:
-                logger.error("Field Value " + field_value +
-                             " and Field Data type " + field_type +
-                             " do not match")
-        if field_type == "datetime":
+            except Exception as e: # pylint: disable=broad-except
+                logger.error(e)
+
+        elif field_type == "datetime":
             try:
                 is_date(field_value)
-            except ValueError:
-                logger.error("Field Value " + field_value +
-                             " and Field Data type " + field_type +
-                             " is not valid")
-            except TypeError:
-                logger.error("Field Value " + field_value +
-                             " and Field Data type " + field_type +
-                             " do not match")
+            except Exception as e: # pylint: disable=broad-except
+                logger.error(e)
+
     else:
         return None
 

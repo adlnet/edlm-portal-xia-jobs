@@ -2,9 +2,6 @@ import hashlib
 import logging
 
 import pandas as pd
-from django.core.management.base import BaseCommand
-from django.utils import timezone
-
 from core.management.utils.xia_internal import (dict_flatten,
                                                 get_target_metadata_key_value,
                                                 is_date,
@@ -15,6 +12,8 @@ from core.management.utils.xss_client import (
     get_source_validation_schema, get_target_metadata_for_transformation,
     get_target_validation_schema)
 from core.models import MetadataFieldOverwrite, MetadataLedger
+from django.core.management.base import BaseCommand
+from django.utils import timezone
 
 logger = logging.getLogger('dict_config_logger')
 
@@ -72,34 +71,45 @@ def overwrite_metadata_field(metadata_df):
     return source_data_dict[0]
 
 
+def datatype_checking_target_metadata(ind, target_data_dict, index,
+                                      expected_data_types, section):
+    """check if item has a expected datatype from schema"""
+    for key in target_data_dict[index][section]:
+        item = section + '.' + key
+        # check if item has a expected datatype from schema
+        if item in expected_data_types:
+            # check for datetime datatype for field in metadata
+            if expected_data_types[item] == "datetime":
+                if not is_date(target_data_dict[index][section][key]):
+                    # explicitly convert to string if incorrect
+                    target_data_dict[index][section][key] = str(
+                        target_data_dict[index][section][key])
+                    required_recommended_logs(ind, "datatype",
+                                              item)
+            # check for datatype for field in metadata(except datetime)
+            elif (not isinstance(target_data_dict[index][section][key],
+                                 expected_data_types[item])):
+                # explicitly convert to string if incorrect
+                target_data_dict[index][section][key] = str(
+                    target_data_dict[index][section][key])
+                required_recommended_logs(ind, "datatype",
+                                          item)
+        # explicitly convert to string if datatype not present
+        else:
+            target_data_dict[index][section][key] = str(
+                target_data_dict[index][section][key])
+    return target_data_dict
+
+
 def type_checking_target_metadata(ind, target_data_dict, expected_data_types):
     """Function for type checking and explicit type conversion of metadata"""
     for index in target_data_dict:
         for section in target_data_dict[index]:
-            for key in target_data_dict[index][section]:
-                item = section + '.' + key
-                # check if item has a expected datatype from schema
-                if item in expected_data_types:
-                    # check for datetime datatype for field in metadata
-                    if expected_data_types[item] == "datetime":
-                        if not is_date(target_data_dict[index][section][key]):
-                            # explicitly convert to string if incorrect
-                            target_data_dict[index][section][key] = str(
-                                target_data_dict[index][section][key])
-                            required_recommended_logs(ind, "datatype",
-                                                      item)
-                    # check for datatype for field in metadata(except datetime)
-                    elif (not isinstance(target_data_dict[index][section][key],
-                                         expected_data_types[item])):
-                        # explicitly convert to string if incorrect
-                        target_data_dict[index][section][key] = str(
-                            target_data_dict[index][section][key])
-                        required_recommended_logs(ind, "datatype",
-                                                  item)
-                # explicitly convert to string if datatype not present
-                else:
-                    target_data_dict[index][section][key] = str(
-                        target_data_dict[index][section][key])
+            target_data_dict = datatype_checking_target_metadata(ind,
+                                                                 target_data_dict,
+                                                                 index,
+                                                                 expected_data_types,
+                                                                 section)
     return target_data_dict
 
 
