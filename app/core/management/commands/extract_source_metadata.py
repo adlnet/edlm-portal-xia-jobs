@@ -4,23 +4,20 @@ import logging
 
 import numpy as np
 import pandas as pd
+from core.management.utils.xia_internal import (convert_date_to_isoformat,
+                                                get_publisher_detail)
 from core.management.utils.xsr_client import (find_dates, find_html,
                                               get_source_metadata_key_value,
                                               read_source_file)
-from core.models import XSRConfiguration
+from core.models import MetadataLedger, XSRConfiguration
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-from openlxp_xia.management.utils.xia_internal import (
-    convert_date_to_isoformat, get_publisher_detail)
-from openlxp_xia.models import MetadataLedger
 
 logger = logging.getLogger('dict_config_logger')
 
 
 def get_source_metadata():
     """Retrieving source metadata"""
-
-    print(XSRConfiguration.objects.all())
 
     for xsr_obj in XSRConfiguration.objects.all():
         #  Retrieve metadata from agents as a list of sources
@@ -68,7 +65,9 @@ def store_source_metadata(key_value, key_value_hash, hash_value, metadata):
         source_metadata_key_hash=key_value_hash,
         source_metadata=metadata,
         source_metadata_hash=hash_value,
-        record_lifecycle_status='Active')
+        record_lifecycle_status='Active',
+        code=metadata["code"],
+        eccr_uuid=metadata['eccr_uuid'])
 
 
 def extract_metadata_using_key(source_df):
@@ -105,6 +104,7 @@ def extract_metadata_using_key(source_df):
 class Command(BaseCommand):
     """Django command to extract data from Experience Source Repository (
     XSR) """
+
     def handle(self, *args, **options):
         """
             Metadata is extracted from XSR and stored in Metadata Ledger
